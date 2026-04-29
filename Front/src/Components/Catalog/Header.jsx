@@ -2,8 +2,6 @@ import {useState} from 'react'
 import {NavLink, useNavigate} from 'react-router-dom'
 import {useUser, useClerk, UserProfile} from '@clerk/clerk-react'
 import logo from '../../assets/aglome _copy.png'
-import ContactanosRest from "../Rest/ContactanosRest.jsx";
-import Contactanos from "../../Pages/Catalog/Contactanos.jsx";
 import {noti_util} from "../../Utils/Toast.jsx";
 
 export default function Header() {
@@ -62,7 +60,6 @@ export default function Header() {
                                 {to: '/', label: 'INICIO'},
                                 {to: '/nosotros', label: 'NOSOTROS'},
                                 {to: '/tienda', label: 'TIENDA'},
-                                {to: '/metodos', label: 'MÉTODO DE PAGOS'},
                                 {to: '/reclamaciones', label: 'LIBRO DE RECLAMACIONES'},
                                 {to: '/contactanos', label: 'CONTACTANOS'},
                             ].map(({to, label}) => (
@@ -221,13 +218,6 @@ export default function Header() {
                                         <div>Contenido de direcciones aquí</div>
                                     </UserProfile.Page>
 
-                                    <UserProfile.Page
-                                        label="Métodos de pago"
-                                        url="metodos"
-                                        labelIcon={<i className="fas fa-credit-card"/>}
-                                    >
-                                        <div>Contenido de métodos de pago aquí</div>
-                                    </UserProfile.Page>
                                 </UserProfile>
                             </div>
                         </div>

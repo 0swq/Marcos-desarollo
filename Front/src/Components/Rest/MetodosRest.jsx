@@ -1,4 +1,3 @@
-// Pages/Catalog/MetodoPagoRest.jsx
 import { useRef, useEffect, useState } from 'react'
 
 const tarjetasCredito = [

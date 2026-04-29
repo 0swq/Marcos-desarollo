@@ -40,7 +40,7 @@ function SkeletonCard() {
     )
 }
 
-function ProductoModal({producto, onClose}) {
+function ProductoModal({ producto, onClose }) {
     useEffect(() => {
         const esc = (e) => e.key === 'Escape' && onClose()
         window.addEventListener('keydown', esc)
@@ -48,77 +48,41 @@ function ProductoModal({producto, onClose}) {
     }, [onClose])
 
     if (!producto) return null
+
     const agotado = producto.stock <= 0
 
     return (
-        <div
-            className="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999] animate-fadeIn"
-            onClick={onClose}
-        >
-            <div
-                className="bg-white rounded-2xl shadow-2xl max-w-2xl w-[95%] max-h-[90vh] overflow-hidden flex flex-col sm:flex-row relative"
-                onClick={(e) => e.stopPropagation()}
-            >
-                <button
-                    onClick={onClose}
-                    className="absolute top-3 right-3 w-8 h-8 bg-[#f0f0f0] hover:bg-[#e0e0e0] rounded-full flex items-center justify-center text-[#666] text-xl font-light z-10 transition-colors"
-                >
+        <div className=" fixed inset-0 bg-black/60 flex items-center justify-center z-[9999] animate-fadeIn" onClick={onClose}>
+            <div className="border-red-500 bg-white rounded-2xl shadow-2xl max-w-3xl w-[95%] max-h-[90vh] overflow-hidden flex flex-col sm:flex-row relative" onClick={(e) => e.stopPropagation()}>
+                <button onClick={onClose} className="absolute top-3 right-3 w-8 h-8 bg-[#f0f0f0] hover:bg-[#e0e0e0] rounded-full flex items-center justify-center text-[#666] text-xl z-10 transition-colors">
                     &times;
                 </button>
-
-                {/* Imagen */}
                 <div className="sm:w-[55%] bg-[#fafafa] flex items-center justify-center p-8 relative min-h-[240px]">
-                    <img
-                        src={producto.img}
-                        alt={producto.nombre}
-                        className="max-w-full max-h-64 object-contain"
-                    />
-                    {agotado && (
-                        <span
-                            className="absolute top-3 left-3 bg-[#999] text-white text-xs font-bold px-2 py-1 rounded">
-              AGOTADO
-            </span>
-                    )}
+                    <img src={producto.img} alt={producto.nombre} className="max-w-full max-h-64 object-contain" />
+                    {agotado && <span className="absolute top-3 left-3 bg-[#999] text-white text-xs font-bold px-2 py-1 rounded">AGOTADO</span>}
                 </div>
-
-                {/* Info */}
                 <div className="flex-1 p-7 flex flex-col justify-center">
-          <span
-              className="text-[11px] uppercase bg-[#f5f5f5] text-[#999] px-2 py-1 rounded-full inline-block w-fit mb-3">
-            {producto.categoria}
-          </span>
-                    <h2 className="text-xl font-bold text-[#2c3e50] mb-4 leading-tight">
-                        {producto.nombre}
-                    </h2>
+                    <span className="text-[11px] uppercase bg-[#f5f5f5] text-[#999] px-2 py-1 rounded-full inline-block w-fit mb-3">{producto.categoria}</span>
+                    <h2 className="text-xl font-bold text-[#2c3e50] mb-4 leading-tight">{producto.nombre}</h2>
+
                     <div className="space-y-2 border-t border-[#f0f0f0] pt-4 mb-5">
-                        <div className="flex justify-between text-sm text-[#666]">
+                        <div className="flex justify-between text-sm">
                             <span className="font-semibold text-[#2c3e50]">Stock:</span>
-                            <span>{producto.stock} {producto.unidad_medida}</span>
+                            <span className="text-[#666]">{producto.stock} {producto.unidad_medida}</span>
                         </div>
                         <div className="flex justify-between text-sm font-bold">
                             <span className="text-[#2c3e50]">Precio:</span>
-                            <span className="text-[#3498db] text-base">
-                S/ {Number(producto.precio_venta).toFixed(2)}
-              </span>
+                            <span className="text-[#3498db] text-base">S/ {Number(producto.precio_venta).toFixed(2)}</span>
                         </div>
                     </div>
 
                     {agotado ? (
-                        <button
-                            disabled
-                            className="w-full py-2.5 rounded-lg bg-[#bdc3c7] text-white font-bold text-sm flex items-center justify-center gap-2 cursor-not-allowed"
-                        >
-                            <i className="fas fa-times"></i> AGOTADO
+                        <button disabled className="w-full py-2.5 rounded-lg bg-[#bdc3c7] text-white font-bold text-sm flex items-center justify-center gap-2 cursor-not-allowed">
+                            <i className="fas fa-times" /> AGOTADO
                         </button>
                     ) : (
-                        <button
-                            className="w-full py-2.5 rounded-lg border-2 border-[#3498db] text-[#3498db] font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#3498db] hover:text-white transition-all duration-300"
-                            onClick={() => {
-                                // TODO: conectar con lógica de carrito
-                                onClose()
-                            }}
-                        >
-                            <i className="fas fa-shopping-cart"></i> AGREGAR AL CARRITO
+                        <button onClick={onClose} className="w-full py-2.5 rounded-lg border-2 border-[#3498db] text-[#3498db] font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#3498db] hover:text-white transition-all duration-300">
+                            <i className="fas fa-shopping-cart" /> AGREGAR AL CARRITO
                         </button>
                     )}
                 </div>

@@ -1,6 +1,5 @@
 from uuid import UUID
-
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, Depends, Body
 
 import Back.Core.Entitys.Usuario.Usuario_service as usuario_service
 from Back.Infra.Utils.TOKEN import AUTH, es_propietario, es_admin
@@ -25,21 +24,11 @@ def buscar(busqueda: str, usuario: dict = Depends(es_admin)):
 
 
 @router.patch("/{usuario_id}")
-def actualizar(usuario_id: UUID, datos: dict, usuario: dict = Depends(es_propietario)):
+def actualizar(usuario_id: UUID, datos: dict = Body(...), usuario: dict = Depends(es_propietario)):
     try:
-        usuario_service.actualizar(usuario_id, **datos)
+        campos = {k: v for k, v in datos.items() if v is not None}
+        usuario_service.actualizar(usuario_id, **campos)
         return {"detail": "Usuario actualizado"}
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@router.patch("/{usuario_id}/foto")
-def cambiar_foto(usuario_id: UUID, archivo: UploadFile = File(...), usuario: dict = Depends(es_propietario)):
-    if archivo.content_type != "image/png":
-        raise HTTPException(status_code=400, detail="Solo se permiten archivos PNG")
-    try:
-        usuario_service.cambiar_foto_perfil(usuario_id, archivo)
-        return {"detail": "Foto actualizada"}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
