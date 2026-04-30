@@ -62,8 +62,9 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Proyecto Final", lifespan=lifespan)
 
 for root, dirs, files in os.walk("Back"):
+    dirs[:] = [d for d in dirs if d != "venv"]
     for file in files:
-        if file.endswith(".py") and file != "__init__.py":
+        if file.endswith(".py") and file != "__init__.py" and file != "tunel.py":
             module_path = os.path.join(root, file).replace(os.sep, ".").replace(".py", "")
             try:
                 module = importlib.import_module(module_path)

@@ -2,14 +2,7 @@ from typing import List
 from Back.Core.Entitys.Usuario.Usuario import Usuario
 
 
-def registrar(clerk_id: str, nombres: str, apellidos: str, email: str, rol: str = 'cliente') -> Usuario:
-    usuario = Usuario(
-        id=clerk_id,
-        mail=email,
-        nombres=nombres,
-        apellidos=apellidos,
-        rol=rol,
-    )
+def registrar(usuario:Usuario) -> Usuario:
     usuario.save(force_insert=True)
     return usuario
 
@@ -45,7 +38,3 @@ def actualizar(usuario_id, **campos) -> bool:
     filas = Usuario.update(**campos).where(Usuario.id == usuario_id).execute()
     return filas > 0
 
-
-def desactivar(usuario_id) -> bool:
-    filas = Usuario.update(activo=False).where(Usuario.id == usuario_id).execute()
-    return filas > 0

@@ -17,7 +17,7 @@ class Usuario(BaseModel):
     usuario = CharField(max_length=50, unique=True, null=True)
     rol = CharField(max_length=20, default='cliente', choices=[(r, r) for r in ROLES])
     tipo_usuario = CharField(max_length=20, default='minorista', choices=[(t, t) for t in TIPOS])
-    creado_en = DateTimeField(default=datetime.now)
+    creado_en = CharField(default="")
     activo = BooleanField(default=True)
     nivel = CharField(max_length=20, null=True, choices=[(n, n) for n in NIVELES])
     nivel_valido_hasta = DateTimeField(null=True)

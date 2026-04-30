@@ -9,13 +9,10 @@ export default function Header() {
     const [menuUsuario, setMenuUsuario] = useState(false)
     const [perfilAbierto, setPerfilAbierto] = useState(false)
 
-
     const navigate = useNavigate()
     const {isSignedIn, user} = useUser()
     const {signOut, openSignIn} = useClerk()
     const esAdmin = true
-    //const esAdmin = user?.publicMetadata?.role === "admin"
-
 
     const handleSearch = (e) => {
         e.preventDefault()
@@ -35,7 +32,6 @@ export default function Header() {
         <header className="bg-white shadow-md sticky top-0 z-50">
             <div className="w-full pl-5">
                 <div className="flex items-center gap-5 py-4 min-h-[70px] flex-wrap">
-
                     <NavLink to="/"
                              className="flex items-center gap-2 text-[#2c3e50] font-bold text-2xl no-underline hover:opacity-90 transition-opacity">
                         <img src={logo} alt="AGLOME" className="w-12 h-12 object-contain"/>

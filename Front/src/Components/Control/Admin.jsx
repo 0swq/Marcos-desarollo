@@ -75,12 +75,7 @@ export default function Admin() {
                     leftSection={<i className="fas fa-robot text-[#3498db]"/>}
                     onClick={() => navigate('/admin/chatbot')}
                 />
-                <NavLink
-                    label="Config"
-                    fz="xl"
-                    leftSection={<i className="fas fa-gear text-[#3498db]"/>}
-                    onClick={() => navigate('/admin/config')}
-                />
+
             </AppShell.Navbar>
 
 <AppShell.Main style={{ height: 'calc(100vh - 60px)', display: 'flex', flexDirection: 'column', padding: 0 }}>

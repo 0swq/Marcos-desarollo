@@ -11,7 +11,7 @@ import {TooltipProvider} from "@/Components/ui/tooltip.jsx";
 
 createRoot(document.getElementById('root')).render(
     <StrictMode>
-         <TooltipProvider>
+        <TooltipProvider>
         <ClerkProvider
             localization={esES}
             publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}
@@ -34,3 +34,6 @@ createRoot(document.getElementById('root')).render(
          </TooltipProvider>
     </StrictMode>
 )
+
+
+

@@ -10,7 +10,7 @@ from Back.Core.Entitys.Usuario.Usuario import Usuario
 class CuponUsuario(BaseModel):
     id = UUIDField(primary_key=True, default=uuid.uuid4)
     cupon = ForeignKeyField(Cupon, backref='usos', on_delete='CASCADE', column_name='cupon_id')
-    usuario = ForeignKeyField(Usuario, backref='cupones_usados', on_delete='CASCADE', column_name='usuario_id')
+    usuario = ForeignKeyField(Usuario, backref='cupones_usados', on_delete='CASCADE', column_name='usuario_id', field='id')
     pedido = DeferredForeignKey('Pedido', backref='cupon_uso', on_delete='CASCADE', column_name='pedido_id')
     usado_en = DateTimeField(default=datetime.now)
 

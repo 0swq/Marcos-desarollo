@@ -6,9 +6,6 @@ import HeroCarrusel from "../../Components/Catalog/Hero Carrusel.jsx"
 import SocialButtons from "../../Components/Catalog/Social.jsx"
 
 export default function Index() {
-
-
-
     return (
         <div className="min-h-screen flex flex-col">
             <Header/>

@@ -14,19 +14,20 @@ class Pedido(BaseModel):
     ESTADOS = ('pendiente', 'confirmado', 'completado', 'cancelado')
     TIPOS_ENTREGA = ('DELIVERY', 'RECOJO')
 
-    id                 = UUIDField(primary_key=True, default=uuid.uuid4)
-    usuario            = ForeignKeyField(Usuario, backref='pedidos', on_delete='CASCADE', column_name='usuario_id')
-    carrito            = ForeignKeyField(Carrito, backref='pedido', null=True, on_delete='SET NULL', column_name='carrito_id')
-    cupon              = ForeignKeyField(Cupon, backref='pedidos', null=True, on_delete='SET NULL', column_name='cupon_id')
+    id = UUIDField(primary_key=True, default=uuid.uuid4)
+    usuario = ForeignKeyField(Usuario, backref='pedidos', on_delete='CASCADE', column_name='usuario_id', field='id')
+    carrito = ForeignKeyField(Carrito, backref='pedido', null=True, on_delete='SET NULL', column_name='carrito_id')
+    cupon = ForeignKeyField(Cupon, backref='pedidos', null=True, on_delete='SET NULL', column_name='cupon_id')
     descuento_aplicado = DecimalField(max_digits=10, decimal_places=2, default=0)
-    subtotal           = DecimalField(max_digits=10, decimal_places=2)
-    costo_envio        = DecimalField(max_digits=10, decimal_places=2, default=0)
-    total              = DecimalField(max_digits=10, decimal_places=2)
-    tipo_entrega       = CharField(max_length=20, choices=[(t, t) for t in TIPOS_ENTREGA])
-    direccion          = ForeignKeyField(Direccion, backref='pedidos', null=True, on_delete='SET NULL', column_name='direccion_id')
+    subtotal = DecimalField(max_digits=10, decimal_places=2)
+    costo_envio = DecimalField(max_digits=10, decimal_places=2, default=0)
+    total = DecimalField(max_digits=10, decimal_places=2)
+    tipo_entrega = CharField(max_length=20, choices=[(t, t) for t in TIPOS_ENTREGA])
+    direccion = ForeignKeyField(Direccion, backref='pedidos', null=True, on_delete='SET NULL',
+                                column_name='direccion_id')
 
-    estado             = CharField(max_length=20, default='pendiente', choices=[(e, e) for e in ESTADOS])
-    fecha              = DateTimeField(default=datetime.now)
+    estado = CharField(max_length=20, default='pendiente', choices=[(e, e) for e in ESTADOS])
+    fecha = DateTimeField(default=datetime.now)
 
     class Meta:
         table_name = 'pedido'

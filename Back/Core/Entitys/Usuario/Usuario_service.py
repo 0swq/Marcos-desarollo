@@ -3,28 +3,11 @@ from clerk_backend_api import Clerk
 import Back.Core.Entitys.Usuario.Usuario_repo as usuario_repository
 from Back.Core.Entitys.Usuario.Usuario import Usuario
 
-clerk = Clerk(bearer_auth=os.getenv("CLERK_SECRET_KEY"))
 
-
-def registrar(nombres: str, apellidos: str, email: str, password: str, rol: str = 'cliente') -> None:
-    if usuario_repository.obtener_por_email(email):
+def registrar(usuario: Usuario) -> None:
+    if usuario_repository.obtener_por_email(usuario.mail):
         raise ValueError("El email ya está registrado")
-    usuario_repository.registrar(nombres, apellidos, email, password, rol)
-    )
-
-
-def registrar_desde_webhook(clerk_id: str, nombres: str, apellidos: str, email: str) -> Usuario:
-    if usuario_repository.obtener_por_email(email):
-        raise ValueError("El email ya está registrado")
-    clerk.users.create(
-        email_address=[email],
-
-        first_name=nombres,
-        last_name=apellidos,
-        public_metadata={
-            "rol": rol
-        }
-    usuario_repository.registrar(nombres, apellidos, email, password, rol)
+    usuario_repository.registrar(usuario)
 
 
 def obtener(usuario_id) -> Usuario | None:
@@ -47,61 +30,75 @@ def listar_activos() -> list[Usuario]:
     return usuario_repository.listar_activos()
 
 
-# ── ACTUALIZAR ────────────────────────────────────────────────────────────────
-
-def actualizar(usuario_id, **campos) -> bool:
-    """El usuario actualiza sus propios datos. BD + sincroniza Clerk."""
+def actualizar_desde_hook(usuario_id, **campos) -> bool:
     campos.pop('rol', None)
     campos.pop('tipo_usuario', None)
     campos.pop('nivel', None)
     campos.pop('nivel_valido_hasta', None)
-    campos.pop('activo', None)
 
     if not campos:
         return False
 
-    _validar_email_unico(usuario_id, campos)
+    if "mail" in campos and usuario_repository.obtener_por_email(campos["mail"]):
+        return False
+
     usuario_repository.actualizar(usuario_id, **campos)
-    usuario_repository.actualizar_en_clerk(usuario_id)
     return True
 
 
-def actualizar_desde_webhook(usuario_id, **campos) -> bool:
-    """Llamado desde webhook. Solo actualiza BD, Clerk ya tiene los datos."""
-    if not campos:
-        return False
-    return usuario_repository.actualizar(usuario_id, **campos)
+async def actualizar(usuario_id, **campos) -> bool:
+    campos.pop('rol', None)
+    campos.pop('tipo_usuario', None)
+    campos.pop('nivel', None)
+    campos.pop('nivel_valido_hasta', None)
 
-
-def actualizar_desde_admin(usuario_id, **campos) -> bool:
-    """Admin puede cambiar cualquier campo. BD + sincroniza Clerk."""
     if not campos:
         return False
 
-    _validar_email_unico(usuario_id, campos)
+    await actualizar_clerk(usuario_id, **campos)
+    return True
+
+
+async def actualizar_clerk(usuario_id, **campos) -> bool:
+    if "mail" in campos and usuario_repository.obtener_por_email(campos["mail"]):
+        return False
+
     usuario_repository.actualizar(usuario_id, **campos)
-    usuario_repository.actualizar_en_clerk(usuario_id)
+    usuario = usuario_repository.obtener_por_id(usuario_id)
+
+    async with Clerk(bearer_auth=os.getenv("CLERK_SECRET_KEY")) as clerk:
+        await clerk.users.update_async(
+            user_id=usuario.id,
+            first_name=usuario.nombres,
+            last_name=usuario.apellidos,
+            username=usuario.usuario,
+            public_metadata={
+                "rol": usuario.rol,
+                "tipo_usuario": usuario.tipo_usuario,
+                "activo": usuario.activo,
+                "nivel": usuario.nivel,
+                "nivel_valido_hasta": str(usuario.nivel_valido_hasta) if usuario.nivel_valido_hasta else None,
+            }
+        )
     return True
 
 
-def cambiar_rol(usuario_id) -> bool:
-    """Cambia rol entre admin y cliente. BD + sincroniza Clerk."""
-    usuario = obtener(usuario_id)
-    if not usuario:
-        raise ValueError(f"Usuario {usuario_id} no encontrado")
-    nuevo_rol = 'admin' if usuario.rol == 'cliente' else 'cliente'
-    usuario_repository.actualizar(usuario_id, rol=nuevo_rol)
-    usuario_repository.actualizar_en_clerk(usuario_id)
+async def actualizar_desde_admin(usuario_id, **campos) -> bool:
+    await actualizar_clerk(usuario_id, **campos)
     return True
 
 
-# ── DESACTIVAR ────────────────────────────────────────────────────────────────
+async def cambiar_rol(usuario_id) -> bool:
+    usuario = usuario_repository.obtener_por_id(usuario_id)
+    data = {"rol": "cliente" if usuario.rol == "admin" else "admin"}
+    await actualizar_clerk(usuario_id=usuario_id, **data)
+    return True
 
-def desactivar(usuario_id) -> bool:
-    return usuario_repository.desactivar(usuario_id)
 
+async def desactivar(usuario_id) -> bool:
+    campos = {"activo": False}
+    return await actualizar_desde_admin(usuario_id=usuario_id, **campos)
 
-# ── HELPERS ───────────────────────────────────────────────────────────────────
 
 def _validar_email_unico(usuario_id, campos: dict):
     if "mail" in campos and campos["mail"]:
