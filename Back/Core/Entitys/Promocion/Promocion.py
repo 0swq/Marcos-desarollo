@@ -3,8 +3,8 @@ from peewee import UUIDField, CharField, BooleanField, DateTimeField, ForeignKey
 
 from Back.Core.Connection.Postgre import BaseModel
 from Back.Core.Entitys.Categoria.Categoria import Categoria
-from Back.Core.Entitys.ProductoBase.ProductoBase import ProductoBase
-from Back.Core.Entitys.Variante.Variante import Variante
+from Back.Core.Entitys.Producto.ProductoBase.ProductoBase import ProductoBase
+from Back.Core.Entitys.Producto.Variante.Variante import Variante
 
 
 class Promocion(BaseModel):

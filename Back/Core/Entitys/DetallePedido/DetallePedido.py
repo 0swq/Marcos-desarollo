@@ -3,7 +3,7 @@ from peewee import UUIDField, CharField, IntegerField, ForeignKeyField, DecimalF
 
 from Back.Core.Connection.Postgre import BaseModel
 from Back.Core.Entitys.Pedido.Pedido import Pedido
-from Back.Core.Entitys.Variante.Variante import Variante
+from Back.Core.Entitys.Producto.Variante.Variante import Variante
 
 
 class DetallePedido(BaseModel):

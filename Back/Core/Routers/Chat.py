@@ -17,11 +17,11 @@ Si requiere INSERT/UPDATE/DELETE/DROP, responde: PROHIBIDO
 
 TABLAS Y COLUMNAS:
 
-- usuario: id (uuid), clerk_id, mail, nombres, apellidos, usuario, rol ('admin'|'cliente'), tipo_usuario ('minorista'|'mayorista'), nivel ('bronce'|'plata'|'oro'|'platino'), nivel_valido_hasta, creado_en
+- usuario: id (varchar(128) pk), rol ('admin'|'cliente'), tipo_usuario ('minorista'|'mayorista'), creado_en, nivel ('bronce'|'plata'|'oro'|'platino'), nivel_valido_hasta
 
 - categoria: id (uuid), nombre, padre_id (uuid, self-ref), activa (bool)
 
-- proveedor: id (uuid), ruc, telefono
+- proveedor: id (uuid), ruc (varchar 11), telefono
 
 - producto_base: id (uuid), nombre, descripcion, marca, unidades, categoria_id, proveedor_id, publicado (bool)
 
@@ -36,7 +36,7 @@ TABLAS Y COLUMNAS:
 
 - cupon: id (uuid), codigo, descripcion, tipo_descuento ('porcentaje'|'monto_fijo'), valor, aplica_a ('carrito'|'categoria'|'producto_base'|'variante'), categoria_id, producto_base_id, variante_id, minimo_compra, un_solo_uso (bool), usos_maximos, usos_actuales, combinable_con_promocion (bool), activo (bool), valido_desde, valido_hasta, creado_en
 
-- cupon_usuario: id (uuid), cupon_id, usuario_id, venta_id, usado_en
+- cupon_usuario: id (uuid), cupon_id, usuario_id, pedido_id, usado_en
   [UNIQUE: (cupon_id, usuario_id)]
 
 - carrito: id (uuid), usuario_id, cupon_id, descuento_total, estado ('activo'|'convertido'|'abandonado'), creado_en
@@ -46,11 +46,13 @@ TABLAS Y COLUMNAS:
 
 - promocion: id (uuid), nombre, tipo_descuento ('porcentaje'|'monto_fijo'), valor, aplica_a ('variante'|'producto_base'|'categoria'), categoria_id, producto_base_id, variante_id, activa (bool), valido_desde, valido_hasta
 
-- venta: id (uuid), usuario_id, carrito_id, direccion_id, cupon_id, descuento_aplicado, estado ('pendiente'|'confirmado'|'enviado'|'entregado'|'cancelado'), total, fecha
+- pedido: id (uuid), usuario_id, carrito_id, cupon_id, descuento_aplicado, subtotal, costo_envio, total, tipo_entrega ('DELIVERY'|'RECOJO'), direccion_id
 
-- detalle_venta: id (uuid), venta_id, variante_id, sku_ref, nombre_ref, cantidad, precio_unitario, descuento_unitario
+- detalle_pedido: id (uuid), pedido_id, variante_id, sku_ref, nombre_ref, cantidad, precio_unitario, descuento_unitario
 
-- pago: id (uuid), venta_id, external_id, metodo ('VISA'|'MASTERCARD'|'YAPE'), estado ('pendiente'|'aprobado'|'rechazado'|'reembolsado'), monto, respuesta_pasarela, fecha
+- pago: id (uuid), pedido_id, external_id, metodo ('VISA'|'MASTERCARD'|'YAPE'), estado ('aprobado'|'rechazado'), monto, respuesta_pasarela, fecha
+
+- venta: id (uuid), pedido_id (unique), pago_id (unique), fecha_venta, total, nota
 
 RELACIONES CLAVE:
 - producto_base -> categoria (categoria_id)
@@ -59,10 +61,11 @@ RELACIONES CLAVE:
 - variante_atributo -> variante, tipo_atributo
 - carrito -> usuario, cupon
 - carrito_item -> carrito, variante
-- venta -> usuario, carrito, direccion, cupon
-- detalle_venta -> venta, variante
-- pago -> venta
-- cupon_usuario -> cupon, usuario, venta
+- pedido -> usuario, carrito, cupon, direccion
+- detalle_pedido -> pedido, variante
+- pago -> pedido
+- venta -> pedido, pago
+- cupon_usuario -> cupon, usuario, pedido
 - cupon -> categoria, producto_base, variante (según aplica_a)
 - promocion -> categoria, producto_base, variante (según aplica_a)
 """
@@ -107,9 +110,7 @@ class ChatRequest(BaseModel):
 
 
 @router.post("/stream")
-#def chat_stream(req: ChatRequest, usuario: dict = Depends(es_admin)):
-
-def chat_stream(req: ChatRequest):
+def chat_stream(req: ChatRequest, usuario: dict = Depends(es_admin)):
     sql_response = client.chat.completions.create(
         model="llama-3.1-8b-instant",
         messages=[

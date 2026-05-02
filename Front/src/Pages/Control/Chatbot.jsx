@@ -5,7 +5,7 @@ export default function Chatbot() {
   return (
     <div className="h-screen w-full">
       <ChatRuntime>
-        <Thread />
+        <Thread/>
       </ChatRuntime>
     </div>
   );

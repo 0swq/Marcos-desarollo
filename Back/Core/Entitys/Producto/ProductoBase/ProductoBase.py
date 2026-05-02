@@ -15,6 +15,5 @@ class ProductoBase(BaseModel):
     categoria = ForeignKeyField(Categoria, backref='productos', null=True, on_delete='SET NULL', column_name='categoria_id')
     proveedor = ForeignKeyField(Proveedor, backref='productos', null=True, on_delete='SET NULL', column_name='proveedor_id')
     publicado = BooleanField(default=False)
-
     class Meta:
         table_name = 'producto_base'

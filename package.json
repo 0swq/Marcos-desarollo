@@ -4,6 +4,7 @@
     "tailwindcss": "^4.2.2"
   },
   "dependencies": {
+    "mantine-datatable": "^7.17.1",
     "swiper": "^12.1.3"
   }
 }

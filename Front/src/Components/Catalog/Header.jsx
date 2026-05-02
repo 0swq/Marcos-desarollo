@@ -1,8 +1,13 @@
-import {useState} from 'react'
+import {useEffect, useState} from 'react'
 import {NavLink, useNavigate} from 'react-router-dom'
 import {useUser, useClerk, UserProfile} from '@clerk/clerk-react'
 import logo from '../../assets/aglome _copy.png'
 import {noti_util} from "../../Utils/Toast.jsx";
+import MisCupones from "@/Pages/Catalog/User/MisCupones.jsx";
+import MisPedidos from "@/Pages/Catalog/User/MisPedidos.jsx";
+import MisDirecciones from "@/Pages/Catalog/User/MisDirecciones.jsx";
+import {Api_manager} from "@/Service/Api_manager.jsx";
+import {usePerfil} from "@/Service/Perfil_provider.jsx";
 
 export default function Header() {
     const [menuAbierto, setMenuAbierto] = useState(false)
@@ -11,8 +16,11 @@ export default function Header() {
 
     const navigate = useNavigate()
     const {isSignedIn, user} = useUser()
+
     const {signOut, openSignIn} = useClerk()
-    const esAdmin = true
+    const perfil = usePerfil()
+    const admin = perfil?.rol === "admin"
+
 
     const handleSearch = (e) => {
         e.preventDefault()
@@ -143,7 +151,7 @@ export default function Header() {
                                     <i className="fas fa-user-circle w-4"></i>
                                     Mi perfil
                                 </button>
-                                {esAdmin ? <button
+                                {admin ? <button
                                     onClick={() => {
                                         setPerfilAbierto(true);
                                         setMenuUsuario(false)
@@ -195,23 +203,23 @@ export default function Header() {
                                         url="pedidos"
                                         labelIcon={<i className="fas fa-box"/>}
                                     >
-                                        <h1>sdsas</h1>
+                                        <MisPedidos></MisPedidos>
                                     </UserProfile.Page>
 
                                     <UserProfile.Page
-                                        label="Cupones"
+                                        label="MisCupones"
                                         url="cupones"
                                         labelIcon={<i className="fas fa-ticket"/>}
                                     >
-                                        <div>Contenido de cupones aquí</div>
+                                        <MisCupones></MisCupones>
                                     </UserProfile.Page>
 
                                     <UserProfile.Page
-                                        label="Direcciones"
+                                        label="MisDirecciones"
                                         url="direcciones"
                                         labelIcon={<i className="fas fa-house"/>}
                                     >
-                                        <div>Contenido de direcciones aquí</div>
+                                        <MisDirecciones></MisDirecciones>
                                     </UserProfile.Page>
 
                                 </UserProfile>

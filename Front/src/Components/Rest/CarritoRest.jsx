@@ -64,7 +64,6 @@ function ItemCarrito({item, onCantidad, onEliminar}) {
                 Imagen del producto
             </div>
 
-            {/* Info */}
             <div className="flex-1 min-w-0 flex flex-col justify-between gap-3">
                 <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
@@ -80,7 +79,6 @@ function ItemCarrito({item, onCantidad, onEliminar}) {
                         </p>
                     </div>
 
-                    {/* Botón eliminar */}
                     <button
                         onClick={() => onEliminar(item.id)}
                         className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-[#ccc] hover:text-[#e74c3c] hover:bg-[#fdf0f0] transition-all duration-200"

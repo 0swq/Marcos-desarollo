@@ -1,8 +1,8 @@
-from peewee import UUIDField, CharField, ForeignKeyField, CompositeKey
+from peewee import CharField, ForeignKeyField, CompositeKey
 
 from Back.Core.Connection.Postgre import BaseModel
-from Back.Core.Entitys.Variante.Variante import Variante
-from Back.Core.Entitys.TipoAtributo.TipoAtributo import TipoAtributo
+from Back.Core.Entitys.Producto.Variante.Variante import Variante
+from Back.Core.Entitys.Producto.TipoAtributo.TipoAtributo import TipoAtributo
 
 
 class VarianteAtributo(BaseModel):

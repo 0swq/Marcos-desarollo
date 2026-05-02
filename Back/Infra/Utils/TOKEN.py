@@ -3,9 +3,13 @@ from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 import httpx
 
+from Back.Core.Entitys.Usuario.Usuario import Usuario
+from Back.Core.Entitys.Usuario import Usuario_service
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 CLERK_JWKS_URL = "https://modest-narwhal-32.clerk.accounts.dev/.well-known/jwks.json"
 _jwks_cache = None
+
 
 def get_jwks():
     global _jwks_cache
@@ -14,7 +18,7 @@ def get_jwks():
     return _jwks_cache
 
 
-def decode_token(token: str) -> dict | None:
+def decode_token(token: str) -> str | None:
     try:
         payload = jwt.decode(
             token,
@@ -22,31 +26,40 @@ def decode_token(token: str) -> dict | None:
             algorithms=["RS256"],
             options={"verify_audience": False}
         )
-        return {
-            "clerk_id": payload.get("sub"),
-            "rol": payload.get("public_metadata", {}).get("rol", "cliente"),
-            "activo": payload.get("public_metadata", {}).get("activo", True)
-        }
+        return payload.get("sub")
     except JWTError:
         return None
 
 
-def AUTH(token: str = Depends(oauth2_scheme)):
-    data = decode_token(token)
-    if not data:
+async def AUTH(token: str = Depends(oauth2_scheme)):
+    clerk_id = decode_token(token)
+    if not clerk_id:
         raise HTTPException(status_code=401, detail="Token inválido o expirado")
-    if not data["activo"]:
-        raise HTTPException(status_code=403, detail="Usuario suspendido")
-    return data
 
+    usuario = await Usuario_service.obtener(usuario_id=clerk_id)
 
-def es_propietario(clerk_id: str, usuario: dict = Depends(AUTH)):
+    if not usuario:
+        Usuario_service.registrar(Usuario(id=clerk_id))
+        print("----------------------------Usuario no registrado, registrando....--------------------------------")
+        return {
+            "clerk_id": clerk_id,
+            "rol": "cliente",
+        }
+    if not usuario.activo:
+        raise HTTPException(status_code=403, detail="Cuenta suspendida")
+
+    return {
+        "clerk_id": clerk_id,
+        "rol": usuario.rol,
+    }
+
+async def es_propietario(clerk_id: str, usuario: dict = Depends(AUTH)):
     if usuario["rol"] != "admin" and usuario["clerk_id"] != clerk_id:
         raise HTTPException(status_code=403, detail="No autorizado")
     return usuario
 
 
-def es_admin(usuario: dict = Depends(AUTH)):
+async def es_admin(usuario: dict = Depends(AUTH)):
     if usuario["rol"] != "admin":
         raise HTTPException(status_code=403, detail="No autorizado")
     return usuario

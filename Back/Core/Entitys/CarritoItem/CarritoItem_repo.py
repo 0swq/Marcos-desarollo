@@ -1,5 +1,5 @@
 from Back.Core.Entitys.CarritoItem import CarritoItem
-from Back.Core.Entitys.Variante import Variante
+from Back.Core.Entitys.Producto.Variante import Variante
 
 
 def agregar(carrito_id, variante_id, cantidad, precio_unitario) -> CarritoItem:

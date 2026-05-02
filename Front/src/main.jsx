@@ -7,6 +7,9 @@ import {esES} from '@clerk/localizations'
 import {MantineProvider} from '@mantine/core'
 import '@mantine/core/styles.css'
 import {TooltipProvider} from "@/Components/ui/tooltip.jsx";
+import '@mantine/core/styles.css'
+import 'mantine-datatable/styles.layer.css'
+import {PerfilProvider} from "@/Service/Perfil_provider.jsx";
 
 
 createRoot(document.getElementById('root')).render(
@@ -27,7 +30,9 @@ createRoot(document.getElementById('root')).render(
             }}
         >
             <MantineProvider>
+                <PerfilProvider>
                 <App/>
+                </PerfilProvider>
             </MantineProvider>
 
         </ClerkProvider>

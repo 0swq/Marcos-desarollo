@@ -19,37 +19,40 @@ import Productos from "./Pages/Control/Productos.jsx";
 import Usuarios from "./Pages/Control/Usuarios.jsx";
 import Cupones from "./Pages/Control/Cupones.jsx";
 import Promociones from "./Pages/Control/Promociones.jsx";
-import Config from "./Pages/Control/Config.jsx";
 
-function RutaProtegida({page}) {
-    const {isSignedIn, isLoaded} = useAuth()
-    const {openSignIn} = useClerk()
+
+function RutaProtegida({ children }) {
+    const { isSignedIn, isLoaded } = useAuth()
+    const { openSignIn } = useClerk()
     const navigate = useNavigate()
 
     useEffect(() => {
-        if (isLoaded && !isSignedIn) {
-            openSignIn({
-                forceRedirectUrl: page,
-                appearance: {},
-                afterSignOutUrl: '/',
-            })
+        if (!isLoaded || isSignedIn) return
+
+        openSignIn({
+            afterSignInUrl: window.location.href,
+            afterSignUpUrl: window.location.href,
+        })
+
+        const timeout = setTimeout(() => {
             const interval = setInterval(() => {
                 const modal = document.querySelector('.cl-modalBackdrop')
                 if (!modal) {
                     clearInterval(interval)
                     navigate('/')
                 }
-            }, 100)
+            }, 200)
+        }, 500)
 
-            return () => clearInterval(interval)
-        }
+        return () => clearTimeout(timeout)
     }, [isLoaded, isSignedIn])
 
-    if (!isLoaded) return null
-    if (!isSignedIn) return null
+    if (!isLoaded) return <Index/>
+    if (!isSignedIn) return <Index/>
 
-    return page
+    return children
 }
+
 
 function App() {
     return (
@@ -78,7 +81,6 @@ function App() {
                     <Route path="cupones" element={<Cupones/>}/>
                     <Route path="promociones" element={<Promociones/>}/>
                     <Route path="chatbot" element={<Chatbot/>}/>
-                    <Route path="config" element={<Config/>}/>
                 </Route>
             </Routes>
             <ToastContainer

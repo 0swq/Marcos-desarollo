@@ -1,6 +1,5 @@
-import importlib
+
 import os
-import pkgutil
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -15,13 +14,13 @@ from Back.Core.Entitys.CuponUsuario.CuponUsuario import CuponUsuario
 from Back.Core.Entitys.DetallePedido.DetallePedido import DetallePedido
 from Back.Core.Entitys.Direccion.Direccion import Direccion
 from Back.Core.Entitys.Pago.Pago import Pago
-from Back.Core.Entitys.ProductoBase.ProductoBase import ProductoBase
+from Back.Core.Entitys.Producto.ProductoBase.ProductoBase import ProductoBase
 from Back.Core.Entitys.Promocion.Promocion import Promocion
 from Back.Core.Entitys.Proveedor.Proveedor import Proveedor
-from Back.Core.Entitys.TipoAtributo.TipoAtributo import TipoAtributo
+from Back.Core.Entitys.Producto.TipoAtributo import TipoAtributo
 from Back.Core.Entitys.Usuario.Usuario import Usuario
-from Back.Core.Entitys.Variante.Variante import Variante
-from Back.Core.Entitys.VarianteAtributo.VarianteAtributo import VarianteAtributo
+from Back.Core.Entitys.Producto.Variante.Variante import Variante
+from Back.Core.Entitys.Producto.VarianteAtributo import VarianteAtributo
 from Back.Core.Entitys.Pedido.Pedido import Pedido
 
 import importlib
@@ -51,8 +50,8 @@ FOTOS_PRODUCTOS = os.path.join(BASE_DIR, "Back", "Resources", "Fotos", "Producto
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     db.connect()
-    db.execute_sql('DROP SCHEMA public CASCADE;')
-    db.execute_sql('CREATE SCHEMA public;')
+#    db.execute_sql('DROP SCHEMA public CASCADE;')
+#    db.execute_sql('CREATE SCHEMA public;')
     db.execute_sql('GRANT ALL ON SCHEMA public TO public;')
     db.create_tables(MODELS, safe=True)
     print("Iniciado")
@@ -72,7 +71,7 @@ for root, dirs, files in os.walk("Back"):
                     app.include_router(module.router)
                     print(f"Router incluido: {module_path}")
             except Exception as e:
-                pass
+                print(f"❌ Error importando {module_path}: {e}")
 
 app.add_middleware(
     CORSMiddleware,

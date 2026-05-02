@@ -1,41 +1,48 @@
 from Back.Core.Entitys.Categoria import Categoria
 
 
-def registrar(nombre, padre_id=None) -> Categoria:
+def registrar_padre(nombre) -> Categoria:
+    return Categoria.create(nombre=nombre)
+
+
+def registrar_hijo(nombre, padre_id) -> Categoria:
     return Categoria.create(nombre=nombre, padre=padre_id)
+
+def obtener_por_nombre(nombre) -> Categoria | None:
+    return Categoria.get_or_none(
+        (Categoria.nombre == nombre)
+    )
 
 def obtener_por_id(categoria_id) -> Categoria | None:
     return Categoria.get_or_none(
-        (Categoria.id == categoria_id) & (Categoria.activa == True)
+        (Categoria.id == categoria_id)
     )
 
-def listar_raices() -> list[Categoria]:
+
+def listar_hijos_de_un_padre(padre_id) -> list[Categoria]:
     return list(Categoria.select().where(
-        (Categoria.padre.is_null()) & (Categoria.activa == True)
+        (Categoria.padre == padre_id)
     ))
 
 
-def listar_por_padre(padre_id) -> list[Categoria]:
-    return list(Categoria.select().where(
-        (Categoria.padre == padre_id) & (Categoria.activa == True)
-    ))
+def listar_padres() -> list[Categoria]:
+    padres = Categoria.select().where( (Categoria.padre.is_null()) )
+    return padres if padres else []
 
-
-def listar_todas() -> list[Categoria]:
-    return list(Categoria.select().where(Categoria.activa == True))
 
 
 def actualizar(categoria_id, **campos) -> bool:
     if not campos:
         return False
-    filas = (Categoria.update(campos)
-             .where(Categoria.id == categoria_id)
-             .execute())
+    filas = (Categoria.update(**campos).where(Categoria.id == categoria_id).execute())
     return filas > 0
 
 
-def desactivar(categoria_id) -> bool:
-    filas = (Categoria.update(activa=False)
+def cambiar_estado(categoria_id) -> bool:
+    categoria = Categoria.get_or_none(Categoria.id == categoria_id)
+    if not categoria:
+        return False
+    filas = (Categoria.update(activa=not categoria.activa)
              .where(Categoria.id == categoria_id)
              .execute())
     return filas > 0

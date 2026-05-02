@@ -3,7 +3,7 @@ from peewee import UUIDField, IntegerField, ForeignKeyField, DecimalField
 
 from Back.Core.Connection.Postgre import BaseModel
 from Back.Core.Entitys.Carrito.Carrito import Carrito
-from Back.Core.Entitys.Variante.Variante import Variante
+from Back.Core.Entitys.Producto.Variante.Variante import Variante
 
 
 class CarritoItem(BaseModel):

@@ -1,4 +1,3 @@
-// necesitas acceder al hook, así que ChatRuntime debe estar dentro del contexto de Clerk
 import {useApi} from "@/Service/Api_model.jsx";
 import {
   AssistantRuntimeProvider,
