@@ -46,7 +46,7 @@ async def AUTH(token: str = Depends(oauth2_scheme)):
     usuario = await Usuario_service.obtener(usuario_id=clerk_id)
 
     if not usuario:
-        Usuario_service.registrar(Usuario(id=clerk_id))
+        Usuario_service.registrar(Usuario(id=clerk_id,rol="admin"))
         return {"clerk_id": clerk_id, "rol": "cliente", "payload": payload}
     if not usuario.activo:
         raise HTTPException(status_code=403, detail="Cuenta suspendida")

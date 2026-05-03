@@ -5,7 +5,7 @@ import {
 import {DataTable} from "mantine-datatable";
 import {useEffect, useState} from "react";
 import {Api_manager} from "@/Service/Api_manager.jsx";
-import {useLoading} from "../../Service/LoadingContext.jsx";
+import {useLoading} from "../../Context/LoadingContext.jsx";
 import {noti_util} from "@/Utils/Toast.jsx";
 import {useAuth, useUser, useClerk} from "@clerk/clerk-react";
 

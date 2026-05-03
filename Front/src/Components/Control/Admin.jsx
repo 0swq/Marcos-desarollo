@@ -2,7 +2,7 @@ import {AppShell, Burger, NavLink, LoadingOverlay} from '@mantine/core'
 import logo from '../../assets/aglome _copy.png'
 import {useDisclosure} from '@mantine/hooks'
 import {Outlet, useNavigate, useLocation} from 'react-router-dom'
-import {LoadingProvider, useLoading} from "../../Service/LoadingContext.jsx"
+import {LoadingProvider, useLoading} from "../../Context/LoadingContext.jsx"
 
 function AdminInner() {
     const [opened, {toggle}] = useDisclosure()

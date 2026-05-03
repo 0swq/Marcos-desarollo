@@ -4,7 +4,7 @@ import Footer from '../../Components/Catalog/Footer.jsx'
 
 import ReclamacionesRest from "../../Components/Rest/ReclamacionesRest.jsx";
 import Hero from "../../Components/Catalog/Hero.jsx";
-import SocialButtons from "../../Components/Catalog/Social.jsx";
+import BotonesEmergentes from "../../Components/Catalog/Botones emergentes.jsx";
 
 
 export default function Reclamaciones() {
@@ -21,7 +21,7 @@ export default function Reclamaciones() {
         <ReclamacionesRest />
       </main>
       <Footer />
-      <SocialButtons />
+      <BotonesEmergentes />
     </div>
   )
 }

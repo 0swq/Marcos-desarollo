@@ -3,7 +3,7 @@ import Footer from "../../Components/Catalog/Footer.jsx"
 import Header from "../../Components/Catalog/Header.jsx"
 import IndexRest from "../../Components/Rest/IndexRest.jsx"
 import HeroCarrusel from "../../Components/Catalog/Hero Carrusel.jsx"
-import SocialButtons from "../../Components/Catalog/Social.jsx"
+import BotonesEmergentes from "../../Components/Catalog/Botones emergentes.jsx"
 
 export default function Index() {
     return (
@@ -11,7 +11,7 @@ export default function Index() {
             <Header/>
             <HeroCarrusel/>
             <IndexRest/>
-            <SocialButtons/>
+            <BotonesEmergentes/>
             <Footer/>
         </div>
     )

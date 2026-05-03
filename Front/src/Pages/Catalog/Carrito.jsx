@@ -1,6 +1,6 @@
 import Header from '../../Components/Catalog/Header.jsx'
 import Footer from '../../Components/Catalog/Footer.jsx'
-import SocialButtons from '../../Components/Catalog/Social.jsx'
+import BotonesEmergentes from '../../Components/Catalog/Botones emergentes.jsx'
 import CarritoRest from '../../Components/Rest/CarritoRest.jsx'
 
 export default function Carrito() {
@@ -9,7 +9,7 @@ export default function Carrito() {
       <Header />
       <CarritoRest />
       <Footer />
-      <SocialButtons />
+      <BotonesEmergentes />
     </div>
   )
 }

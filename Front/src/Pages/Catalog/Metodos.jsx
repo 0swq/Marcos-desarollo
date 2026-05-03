@@ -1,7 +1,7 @@
 import React from 'react';
 import Footer from "../../Components/Catalog/Footer.jsx";
 import Header from "../../Components/Catalog/Header.jsx";
-import SocialButtons from "../../Components/Catalog/Social.jsx";
+import BotonesEmergentes from "../../Components/Catalog/Botones emergentes.jsx";
 import Hero from "../../Components/Catalog/Hero.jsx";
 import MetodoPagoRest from "../../Components/Rest/MetodosRest.jsx";
 
@@ -19,7 +19,7 @@ export default function MetodoPago() {
         <MetodoPagoRest />
       </main>
       <Footer />
-      <SocialButtons />
+      <BotonesEmergentes />
     </div>
   )
 }

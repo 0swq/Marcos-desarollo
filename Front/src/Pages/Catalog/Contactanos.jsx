@@ -1,6 +1,6 @@
 import Header from '../../Components/Catalog/Header.jsx'
 import Footer from '../../Components/Catalog/Footer.jsx'
-import SocialButtons from "../../Components/Catalog/Social.jsx";
+import BotonesEmergentes from "../../Components/Catalog/Botones emergentes.jsx";
 import Hero from "../../Components/Catalog/Hero.jsx";
 import ContactanosRest from "../../Components/Rest/ContactanosRest.jsx";
 
@@ -16,7 +16,7 @@ export default function Contactanos() {
         <ContactanosRest />
 
       <Footer />
-      <SocialButtons />
+      <BotonesEmergentes />
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import {useState, useEffect} from 'react'
 import {NavLink} from "react-router-dom";
 
-export default function SocialButtons() {
+export default function BotonesEmergentes() {
     const [visible, setVisible] = useState(false)
 
     useEffect(() => {
