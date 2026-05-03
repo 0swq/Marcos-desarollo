@@ -19,6 +19,7 @@ import Productos from "./Pages/Control/Productos.jsx";
 import Usuarios from "./Pages/Control/Usuarios.jsx";
 import Cupones from "./Pages/Control/Cupones.jsx";
 import Promociones from "./Pages/Control/Promociones.jsx";
+import Proveedores from "@/Pages/Control/Proveedores.jsx";
 
 
 function RutaProtegida({ children }) {
@@ -81,6 +82,7 @@ function App() {
                     <Route path="cupones" element={<Cupones/>}/>
                     <Route path="promociones" element={<Promociones/>}/>
                     <Route path="chatbot" element={<Chatbot/>}/>
+                     <Route path="proveedores" element={<Proveedores/>}/>
                 </Route>
             </Routes>
             <ToastContainer

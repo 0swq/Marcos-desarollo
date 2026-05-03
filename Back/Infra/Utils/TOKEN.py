@@ -1,3 +1,5 @@
+import time
+
 from jose import jwt, JWTError
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
@@ -11,6 +13,10 @@ CLERK_JWKS_URL = "https://modest-narwhal-32.clerk.accounts.dev/.well-known/jwks.
 _jwks_cache = None
 
 
+class ReverificationRequired(Exception):
+    pass
+
+
 def get_jwks():
     global _jwks_cache
     if _jwks_cache is None:
@@ -18,7 +24,7 @@ def get_jwks():
     return _jwks_cache
 
 
-def decode_token(token: str) -> str | None:
+def decode_token(token: str) -> dict | None:
     try:
         payload = jwt.decode(
             token,
@@ -26,32 +32,27 @@ def decode_token(token: str) -> str | None:
             algorithms=["RS256"],
             options={"verify_audience": False}
         )
-        return payload.get("sub")
+        return payload
     except JWTError:
         return None
 
 
 async def AUTH(token: str = Depends(oauth2_scheme)):
-    clerk_id = decode_token(token)
-    if not clerk_id:
+    payload = decode_token(token)
+    if not payload:
         raise HTTPException(status_code=401, detail="Token inválido o expirado")
 
+    clerk_id = payload.get("sub")
     usuario = await Usuario_service.obtener(usuario_id=clerk_id)
 
     if not usuario:
         Usuario_service.registrar(Usuario(id=clerk_id))
-        print("----------------------------Usuario no registrado, registrando....--------------------------------")
-        return {
-            "clerk_id": clerk_id,
-            "rol": "cliente",
-        }
+        return {"clerk_id": clerk_id, "rol": "cliente", "payload": payload}
     if not usuario.activo:
         raise HTTPException(status_code=403, detail="Cuenta suspendida")
 
-    return {
-        "clerk_id": clerk_id,
-        "rol": usuario.rol,
-    }
+    return {"clerk_id": clerk_id, "rol": usuario.rol, "payload": payload}
+
 
 async def es_propietario(clerk_id: str, usuario: dict = Depends(AUTH)):
     if usuario["rol"] != "admin" and usuario["clerk_id"] != clerk_id:
@@ -62,4 +63,16 @@ async def es_propietario(clerk_id: str, usuario: dict = Depends(AUTH)):
 async def es_admin(usuario: dict = Depends(AUTH)):
     if usuario["rol"] != "admin":
         raise HTTPException(status_code=403, detail="No autorizado")
+    return usuario
+
+
+async def requiere_reverificacion(usuario: dict = Depends(es_admin)):
+    payload = usuario.get("payload", {})
+    fva = payload.get("fva")
+    iat = payload.get("iat", 0)
+    ahora = int(time.time())
+
+    if (ahora - iat) > 600:
+        raise ReverificationRequired()
+
     return usuario

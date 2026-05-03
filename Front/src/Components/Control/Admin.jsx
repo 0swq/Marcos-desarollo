@@ -37,6 +37,11 @@ function AdminInner() {
                 <NavLink active={activo('/admin')} label="Dashboard" fz="xl"
                          leftSection={<i className="fas fa-gauge text-[#3498db]"/>}
                          onClick={() => navigate('/admin')}/>
+
+                <NavLink active={activo('/proveedores')} label="Proveedores" fz="xl"
+                         leftSection={<i className="fas fa-box text-[#3498db]"/>}
+                         onClick={() => navigate('/admin/proveedores')}/>
+
                 <NavLink active={activo('/admin/productos')} label="Productos" fz="xl"
                          leftSection={<i className="fas fa-box text-[#3498db]"/>}
                          onClick={() => navigate('/admin/productos')}/>

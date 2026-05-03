@@ -5,7 +5,7 @@ from Back.Core.Entitys.Producto.ProductoBase import ProductoBase
 from Back.Core.Entitys.Producto.TipoAtributo import TipoAtributo
 from Back.Core.Entitys.Producto.Variante import Variante
 from Back.Core.Entitys.Producto.VarianteAtributo import VarianteAtributo
-from Back.Infra.Utils.TOKEN import AUTH, es_admin
+from Back.Infra.Utils.TOKEN import AUTH, es_admin, requiere_reverificacion
 
 router = APIRouter(prefix="/producto", tags=["Producto"])
 
@@ -43,6 +43,19 @@ def actualizar_producto(producto_base_id: str, datos: dict = Body(...), usuario:
         if not actualizado:
             raise HTTPException(status_code=400, detail="No se pudo actualizar")
         return {"detail": "Producto actualizado"}
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+@router.patch("/variantes/{variante_id}/stock", response_model=None)
+def actualizar_stock_variante_por_id(variante_id: str, datos: dict = Body(...), usuario: dict = Depends(requiere_reverificacion)):
+    try:
+        cantidad = datos.get("cantidad")
+        if cantidad is None:
+            raise HTTPException(status_code=400, detail="Campo stock requerido")
+        actualizado = producto_service.actualizar_stock_variante(variante_id, cantidad=int(cantidad))
+        if not actualizado:
+            raise HTTPException(status_code=400, detail="No se pudo actualizar el stock")
+        return {"detail": "Stock actualizado"}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 

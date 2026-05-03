@@ -38,6 +38,7 @@ export function Api_manager() {
         obtener_tipo_atributo: (tipo_atributo_id) => api.get(`/producto/tipo-atributo/${tipo_atributo_id}`),
         crear_tipo_atributo: (datos) => api.post(`/producto/tipo-atributo/?nombre=${encodeURIComponent(datos.nombre)}`),
         actualizar_tipo_atributo: (tipo_atributo_id, datos) => api.patch(`/producto/tipo-atributo/${tipo_atributo_id}?nombre=${encodeURIComponent(datos.nombre)}`),
+        actualizar_stock_variante: (variante_id, cantidad) => api.patch(`/producto/variantes/${variante_id}/stock`, {cantidad}),
     }
 
     const categorias = {

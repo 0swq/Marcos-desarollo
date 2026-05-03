@@ -4,7 +4,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
-
+from starlette.responses import JSONResponse
+from fastapi import Request
 from Back.Core.Connection.Postgre import db
 from Back.Core.Entitys.Carrito.Carrito import Carrito
 from Back.Core.Entitys.CarritoItem.CarritoItem import CarritoItem
@@ -24,6 +25,8 @@ from Back.Core.Entitys.Producto.VarianteAtributo import VarianteAtributo
 from Back.Core.Entitys.Pedido.Pedido import Pedido
 
 import importlib
+
+from Back.Infra.Utils.TOKEN import ReverificationRequired
 
 MODELS = [
     Usuario,
@@ -46,7 +49,6 @@ MODELS = [
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FOTOS_PRODUCTOS = os.path.join(BASE_DIR, "Back", "Resources", "Fotos", "Productos")
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     db.connect()
@@ -60,6 +62,25 @@ async def lifespan(app: FastAPI):
         db.close()
 app = FastAPI(title="Proyecto Final", lifespan=lifespan)
 
+
+
+@app.exception_handler(ReverificationRequired)
+async def reverification_handler(request: Request, exc: ReverificationRequired):
+    return JSONResponse(
+        status_code=403,
+        content={
+            "clerk_error": {
+                "type": "forbidden",
+                "reason": "reverification-required",
+                "metadata": {
+                    "reverification": {
+                        "level": "second_factor",
+                        "afterMinutes": 10
+                    }
+                }
+            }
+        }
+    )
 for root, dirs, files in os.walk("Back"):
     dirs[:] = [d for d in dirs if d != "venv"]
     for file in files:
