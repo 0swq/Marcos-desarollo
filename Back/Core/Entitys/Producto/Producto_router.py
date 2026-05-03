@@ -1,4 +1,6 @@
 from typing import Any
+
+import httpx
 from fastapi import APIRouter, HTTPException, Depends, Body
 import Back.Core.Entitys.Producto.Producto_service as producto_service
 from Back.Core.Entitys.Producto.ProductoBase import ProductoBase
