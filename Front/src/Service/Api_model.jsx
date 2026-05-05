@@ -37,8 +37,8 @@ export function useApi() {
             noti_util('error', 'Error en el servidor')
             throw new Error('Error en el servidor')
         } else if (method !== 'GET') {
-        noti_util("exito", "Completado")
-    }
+            noti_util("exito", "Completado")
+        }
 
         return res.json()
     }
@@ -69,8 +69,12 @@ export function useApi() {
         }
 
         if (!res.ok) {
-            noti_util('error', 'Error en el servidor')
-            throw new Error('Error en el servidor')
+            const data = await res.json().catch(() => ({}))
+            const msg = data?.detail ?? 'Error en el servidor'
+            if (res.status !== 400) {
+                noti_util('error', msg)
+            }
+            throw new Error(msg)
         }
 
         const reader = res.body.getReader()
@@ -86,7 +90,31 @@ export function useApi() {
             reader.cancel()
         }
     }
-
+    const upload = async (url, formData) => {
+        const token = await getToken()
+        const res = await fetch(`${BASE_URL}${url}`, {
+            method: 'PATCH',
+            headers: {Authorization: `Bearer ${token}`},
+            body: formData,
+        })
+        if (res.status === 401) {
+            noti_util('error', 'Sesión expirada');
+            signOut();
+            navigate('/');
+            throw new Error('No autenticado')
+        }
+        if (res.status === 403) {
+            noti_util('advertencia', 'Sin permisos');
+            navigate('/');
+            throw new Error('Sin permisos')
+        }
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data?.detail ?? 'Error en el servidor')
+        }
+        noti_util("exito", "Completado")
+        return res.json()
+    }
     return {
         get: (url) => request(url),
         post: (url, body) => request(url, {method: 'POST', body: JSON.stringify(body)}),
@@ -94,5 +122,6 @@ export function useApi() {
         put: (url, body) => request(url, {method: 'PUT', body: JSON.stringify(body)}),
         delete: (url) => request(url, {method: 'DELETE'}),
         stream: (url, body, abortSignal) => stream(url, body, abortSignal),
+        upload: (url, formData) => upload(url, formData),
     }
 }

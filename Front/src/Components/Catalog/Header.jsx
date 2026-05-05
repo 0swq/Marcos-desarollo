@@ -207,7 +207,7 @@ export default function Header() {
                                     </UserProfile.Page>
 
                                     <UserProfile.Page
-                                        label="MisCupones"
+                                        label="Mis Cupones"
                                         url="cupones"
                                         labelIcon={<i className="fas fa-ticket"/>}
                                     >
@@ -215,7 +215,7 @@ export default function Header() {
                                     </UserProfile.Page>
 
                                     <UserProfile.Page
-                                        label="MisDirecciones"
+                                        label="Mis Direcciones"
                                         url="direcciones"
                                         labelIcon={<i className="fas fa-house"/>}
                                     >

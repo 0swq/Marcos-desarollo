@@ -4,6 +4,7 @@
     "tailwindcss": "^4.2.2"
   },
   "dependencies": {
+    "@tabler/icons-react": "^3.41.1",
     "mantine-datatable": "^7.17.1",
     "swiper": "^12.1.3"
   }

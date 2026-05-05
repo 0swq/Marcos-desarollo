@@ -65,14 +65,3 @@ async def es_admin(usuario: dict = Depends(AUTH)):
         raise HTTPException(status_code=403, detail="No autorizado")
     return usuario
 
-
-async def requiere_reverificacion(usuario: dict = Depends(es_admin)):
-    payload = usuario.get("payload", {})
-    fva = payload.get("fva")
-    iat = payload.get("iat", 0)
-    ahora = int(time.time())
-
-    if (ahora - iat) > 600:
-        raise ReverificationRequired()
-
-    return usuario

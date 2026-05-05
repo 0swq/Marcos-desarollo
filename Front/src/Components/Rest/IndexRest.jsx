@@ -98,7 +98,7 @@ export default function IndexRest() {
         </div>
       </section>
 
-      {/* Productos Populares */}
+      {/* Productos_base Populares */}
       <section className="py-10 text-center bg-gradient-to-br from-[#f8f9fa] to-[#ecf0f1]">
         <div className="w-[90%] max-w-6xl mx-auto">
           <h2 className="text-4xl font-bold text-[#2c3e50] mb-16">Productos más Buscados</h2>

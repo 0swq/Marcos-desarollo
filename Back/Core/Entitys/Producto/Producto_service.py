@@ -68,6 +68,7 @@ def actualizar_variante(variante_id: str, **campos) -> bool:
 
 def actualizar_stock_variante(variante_id: str, cantidad: int) -> bool:
     variante = repo.obtener_variante(variante_id)
+
     if not variante:
         raise ValueError("Variante no encontrada")
     nuevo_stock = variante.stock + cantidad

@@ -56,6 +56,7 @@ async def listar() -> List[UsuarioCompleto]:
         return [r for r in resultados if r]
 
 
+
 async def listar_activos() -> List[UsuarioCompleto]:
     usuarios = list(Usuario.select().where(Usuario.activo == True))
     if not usuarios: return []

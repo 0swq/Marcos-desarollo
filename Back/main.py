@@ -47,7 +47,7 @@ MODELS = [
     Pago,
 ]
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-FOTOS_PRODUCTOS = os.path.join(BASE_DIR, "Back", "Resources", "Fotos", "Productos")
+FOTOS_PRODUCTOS = os.path.join(BASE_DIR, "Back", "Resources", "Fotos", "Productos_base")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -63,24 +63,6 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Proyecto Final", lifespan=lifespan)
 
 
-
-@app.exception_handler(ReverificationRequired)
-async def reverification_handler(request: Request, exc: ReverificationRequired):
-    return JSONResponse(
-        status_code=403,
-        content={
-            "clerk_error": {
-                "type": "forbidden",
-                "reason": "reverification-required",
-                "metadata": {
-                    "reverification": {
-                        "level": "second_factor",
-                        "afterMinutes": 10
-                    }
-                }
-            }
-        }
-    )
 for root, dirs, files in os.walk("Back"):
     dirs[:] = [d for d in dirs if d != "venv"]
     for file in files:

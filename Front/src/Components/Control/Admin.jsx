@@ -51,7 +51,7 @@ function AdminInner() {
                 <NavLink active={activo('/admin/usuarios')} label="Usuarios" fz="xl"
                          leftSection={<i className="fas fa-users text-[#3498db]"/>}
                          onClick={() => navigate('/admin/usuarios')}/>
-                <NavLink active={activo('/admin/cupones')} label="MisCupones" fz="xl"
+                <NavLink active={activo('/admin/cupones')} label="Cupones" fz="xl"
                          leftSection={<i className="fas fa-ticket text-[#3498db]"/>}
                          onClick={() => navigate('/admin/cupones')}/>
                 <NavLink active={activo('/admin/promociones')} label="Promociones" fz="xl"

@@ -16,6 +16,7 @@ export function Api_manager() {
         }),
         activar: (usuario_id) => api.patch(`/usuario/${usuario_id}/activar`),
         desactivar: (usuario_id) => api.patch(`/usuario/${usuario_id}/desactivar`),
+
     }
 
     const productos = {
@@ -38,7 +39,24 @@ export function Api_manager() {
         obtener_tipo_atributo: (tipo_atributo_id) => api.get(`/producto/tipo-atributo/${tipo_atributo_id}`),
         crear_tipo_atributo: (datos) => api.post(`/producto/tipo-atributo/?nombre=${encodeURIComponent(datos.nombre)}`),
         actualizar_tipo_atributo: (tipo_atributo_id, datos) => api.patch(`/producto/tipo-atributo/${tipo_atributo_id}?nombre=${encodeURIComponent(datos.nombre)}`),
-        actualizar_stock_variante: (variante_id, cantidad) => api.patch(`/producto/variantes/${variante_id}/stock`, {cantidad}),
+        solicitar_codigo_stock: () => api.post("/producto/stock/solicitarCodigo"),
+        actualizar_stock_variante: (variante_id, cantidad, codigo) => api.patch(`/producto/variantes/${variante_id}/stock`, {
+            cantidad,
+            codigo
+        }),
+        obtener_foto: (producto_base_id) => `${import.meta.env.VITE_API_URL}/producto/${producto_base_id}/foto`,
+        actualizar_foto: (producto_base_id, foto) => {
+            const form = new FormData()
+            form.append("foto", foto)
+            return api.upload(`/producto/${producto_base_id}/foto`, form)
+        },
+        obtener_foto_variante: (variante_id) => `${import.meta.env.VITE_API_URL}/producto/variantes/${variante_id}/foto`,
+        actualizar_foto_variante: (variante_id, foto) => {
+            const form = new FormData()
+            form.append("foto", foto)
+            return api.upload(`/producto/variantes/${variante_id}/foto`, form)
+        },
+
     }
 
     const categorias = {
