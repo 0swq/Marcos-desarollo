@@ -10,9 +10,6 @@ import os
 import random
 import time
 from PIL import Image
-import pywhatkit
-
-print(pywhatkit)
 import httpx
 from clerk_backend_api import Clerk
 from fastapi import APIRouter, HTTPException, Depends, Body, UploadFile, File
@@ -21,7 +18,6 @@ from Back.Core.Entitys.Producto.ProductoBase import ProductoBase
 from Back.Core.Entitys.Producto.TipoAtributo import TipoAtributo
 from Back.Core.Entitys.Producto.Variante import Variante
 from Back.Core.Entitys.Producto.VarianteAtributo import VarianteAtributo
-import Back.Core.Entitys.Usuario.Usuario_service as usuario_service
 from Back.Infra.Utils.TOKEN import AUTH, es_admin
 
 router = APIRouter(prefix="/producto", tags=["Producto"])
