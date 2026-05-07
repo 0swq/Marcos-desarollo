@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from Back.Core.Connection.Postgre import db
 from Back.Infra.Utils.TOKEN import es_admin
 
-client = Groq(api_key="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")
+client = Groq(api_key="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")
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 PROMPT_SQL = """
