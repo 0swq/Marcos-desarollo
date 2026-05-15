@@ -28,6 +28,7 @@ export function Api_manager() {
         cambiar_estado: (producto_base_id) => api.patch(`/producto/${producto_base_id}/estado`),
 
         agregar_variante: (datos) => api.post(`/producto/${datos.producto_base_id}/variantes`, datos),
+        obtener_variante: (variante_id) => api.get(`/producto/variantes/${variante_id}`),
         actualizar_variante: (variante_id, datos) => api.patch(`/producto/variantes/${variante_id}`, datos),
         cambiar_estado_variante: (variante_id) => api.patch(`/producto/variantes/${variante_id}/estado`),
 
@@ -50,6 +51,7 @@ export function Api_manager() {
             form.append("foto", foto)
             return api.upload(`/producto/${producto_base_id}/foto`, form)
         },
+
         obtener_foto_variante: (variante_id) => `${import.meta.env.VITE_API_URL}/producto/variantes/${variante_id}/foto`,
         actualizar_foto_variante: (variante_id, foto) => {
             const form = new FormData()

@@ -25,7 +25,6 @@ router = APIRouter(prefix="/producto", tags=["Producto"])
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 FOTOS_PRODUCTOS = os.path.join(BASE_DIR, "Resources", "Fotos", "Productos_base")
 FOTOS_VARIANTES = os.path.join(BASE_DIR, "Resources", "Fotos", "Variantes")
-#asd
 
 
 def guardar_foto(contenido: bytes, ruta: str):
@@ -34,20 +33,36 @@ def guardar_foto(contenido: bytes, ruta: str):
     imagen.save(ruta, "JPEG", quality=85)
     print(ruta)
 
+
+def serializar_atributo(a):
+    tipo = TipoAtributo.get_by_id(a.tipo_atributo_id)
+    return {**a.__data__, "tipo_atributo": tipo.__data__}
+
+
+def serializar_variante_completa(vc):
+    return {
+        "Variante": vc.Variante.__data__,
+        "Atributos": [serializar_atributo(a) for a in vc.Atributos]
+    }
+
+
+def serializar_producto_completo(p):
+    return {
+        "ProductoBase": p.ProductoBase.__data__,
+        "VariantesCompletas": [serializar_variante_completa(vc) for vc in p.VariantesCompletas]
+    }
+
+
 @router.get("/", response_model=None)
 def listar_productos_publicos():
     productos = producto_service.obtener_productos_completos_publicos()
-    return [{"ProductoBase": p.ProductoBase.__data__,
-             "VariantesCompletas": [{"Variante": vc.Variante.__data__, "Atributos": [a.__data__ for a in vc.Atributos]}
-                                    for vc in p.VariantesCompletas]} for p in productos]
+    return [serializar_producto_completo(p) for p in productos]
 
 
 @router.get("/todos", response_model=None)
 def listar_productos(usuario: dict = Depends(es_admin)):
     productos = producto_service.obtener_productos_completos()
-    return [{"ProductoBase": p.ProductoBase.__data__,
-             "VariantesCompletas": [{"Variante": vc.Variante.__data__, "Atributos": [a.__data__ for a in vc.Atributos]}
-                                    for vc in p.VariantesCompletas]} for p in productos]
+    return [serializar_producto_completo(p) for p in productos]
 
 
 @router.post("/stock/solicitarCodigo")
@@ -86,6 +101,14 @@ def listar_tipos_atributo(usuario: dict = Depends(es_admin)):
     return [t.__data__ for t in producto_service.listar_tipos_atributo()]
 
 
+@router.get("/tipo-atributo/{tipo_atributo_id}", response_model=None)
+def obtener_tipo_atributo(tipo_atributo_id: str, usuario: dict = Depends(es_admin)):
+    tipo = producto_service.obtener_tipo_atributo(tipo_atributo_id)
+    if not tipo:
+        raise HTTPException(status_code=404, detail="Tipo de atributo no encontrado")
+    return tipo.__data__
+
+
 @router.post("/tipo-atributo/", response_model=None)
 def crear_tipo_atributo(nombre: str, usuario: dict = Depends(es_admin)):
     return producto_service.crear_tipo_atributo(TipoAtributo(nombre=nombre)).__data__
@@ -111,7 +134,6 @@ def obtener_foto_variante(variante_id: str):
         texto = f"{prod.nombre} {var.sku}"
         return generar_placeholder(texto)
     return FileResponse(ruta, media_type="image/jpeg")
-
 
 
 @router.patch("/variantes/{variante_id}/foto", response_model=None)
@@ -210,6 +232,7 @@ def obtener_foto_producto_base(producto_base_id: str):
         return generar_placeholder(prod.nombre)
     return FileResponse(ruta, media_type="image/jpeg")
 
+
 @router.patch("/{producto_base_id}/foto", response_model=None)
 async def actualizar_foto_producto_base(producto_base_id: str, foto: UploadFile = File(...), usuario: dict = Depends(es_admin)):
     ruta = os.path.join(FOTOS_PRODUCTOS, f"{producto_base_id}.jpg")
@@ -241,13 +264,10 @@ def agregar_variante(variante: dict, usuario: dict = Depends(es_admin)):
 
 @router.get("/{producto_base_id}", response_model=None)
 def obtener_producto(producto_base_id: str):
-    try:
-        p = producto_service.obtener_producto_completo(producto_base_id)
-        return {"ProductoBase": p.ProductoBase.__data__, "VariantesCompletas": [
-            {"Variante": vc.Variante.__data__, "Atributos": [a.__data__ for a in vc.Atributos]} for vc in
-            p.VariantesCompletas]}
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    p = producto_service.obtener_producto_completo(producto_base_id)
+    if not p:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+    return serializar_producto_completo(p)
 
 
 @router.post("/", response_model=None)

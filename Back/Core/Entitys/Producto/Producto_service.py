@@ -26,7 +26,6 @@ def listar_productos_publicos() -> list[ProductoBase]:
 
 
 def actualizar_producto(producto_base_id: str, **campos) -> bool:
-    campos["rol"].pop()
     producto = repo.obtener_producto(producto_base_id)
     if not producto:
         raise ValueError("Producto no encontrado")

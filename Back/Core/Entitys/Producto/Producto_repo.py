@@ -45,7 +45,6 @@ def listar_productos_publicos() -> list[ProductoBase]:
 
 def actualizar_producto(producto_base_id: str, **campos) -> bool:
     if not campos: return False
-    campos.pop("publicado", None)
     filas = ProductoBase.update(**campos).where(ProductoBase.id == producto_base_id).execute()
     return filas > 0
 
