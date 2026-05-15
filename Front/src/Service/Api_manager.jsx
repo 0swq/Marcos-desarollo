@@ -69,5 +69,22 @@ export function Api_manager() {
         cambiar_estado: (categoria_id) => api.patch(`/categoria/${categoria_id}/estado`),
     }
 
-    return {usuarios, productos, categorias}
+    const pedidos = {
+         mis_pedidos: () => api.get("/pedido/mis-pedidos"),
+        mi_detalle: (pedido_id) => api.get(`/pedido/mis-pedidos/${pedido_id}`),
+        // Admin
+        listar_todos: () => api.get("/pedido/listar"),
+        detalle: (pedido_id) => api.get(`/pedido/${pedido_id}`),
+         }
+
+    const promociones = {
+    listar: () => api.get("/promocion/"),
+    obtener: (id) => api.get(`/promocion/${id}`),
+    crear: (datos) => api.post("/promocion/", datos),
+    actualizar: (id, datos) => api.patch(`/promocion/${id}`, datos),
+    cambiar_estado: (id) => api.patch(`/promocion/${id}/estado`),
+    eliminar: (id) => api.delete(`/promocion/${id}`),
+}
+
+    return {usuarios, productos, categorias, pedidos, promociones}
 }

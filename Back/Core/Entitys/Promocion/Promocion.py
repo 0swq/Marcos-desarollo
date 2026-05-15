@@ -1,4 +1,7 @@
 import uuid
+from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel as PydanticBase
 from peewee import UUIDField, CharField, BooleanField, DateTimeField, ForeignKeyField, DecimalField
 
 from Back.Core.Connection.Postgre import BaseModel
@@ -25,3 +28,45 @@ class Promocion(BaseModel):
 
     class Meta:
         table_name = 'promocion'
+
+#schemas pydantic
+
+class PromocionSchema(PydanticBase):
+    id: str
+    nombre: str
+    tipo_descuento: str
+    valor: float
+    aplica_a: str
+    categoria_id: Optional[str] = None
+    producto_base_id: Optional[str] = None
+    variante_id: Optional[str] = None
+    activa: bool
+    valido_desde: datetime
+    valido_hasta: datetime
+
+    class Config:
+        from_attributes = True
+
+class PromocionCreate(PydanticBase):
+    nombre: str
+    tipo_descuento: str
+    valor: float
+    aplica_a: str
+    categoria_id: Optional[str] = None
+    producto_base_id: Optional[str] = None
+    variante_id: Optional[str] = None
+    activa: bool = True
+    valido_desde: datetime
+    valido_hasta: datetime
+
+class PromocionUpdate(PydanticBase):
+    nombre: Optional[str] = None
+    tipo_descuento: Optional[str] = None
+    valor: Optional[float] = None
+    aplica_a: Optional[str] = None
+    categoria_id: Optional[str] = None
+    producto_base_id: Optional[str] = None
+    variante_id: Optional[str] = None
+    valido_desde: Optional[datetime] = None
+    valido_hasta: Optional[datetime] = None
+    Activa: Optional[bool] = None

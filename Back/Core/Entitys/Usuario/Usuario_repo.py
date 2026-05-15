@@ -42,7 +42,7 @@ def registrar(usuario: Usuario) -> Usuario:
 
 async def buscar(busqueda: str) -> List[UsuarioCompleto] | None:
     async with Clerk(bearer_auth=os.getenv("CLERK_SECRET_KEY")) as clerk:
-        res = await clerk.users.list(query=busqueda)
+        res = await clerk.users.list_async(query=busqueda) #adicioné el _async
         if not res: return None
         resultados = await asyncio.gather(*[_completar(u, None) for u in res])
         return [r for r in resultados if r]
@@ -50,7 +50,7 @@ async def buscar(busqueda: str) -> List[UsuarioCompleto] | None:
 
 async def listar() -> List[UsuarioCompleto]:
     async with Clerk(bearer_auth=os.getenv("CLERK_SECRET_KEY")) as clerk:
-        res = await clerk.users.list()
+        res = await clerk.users.list_async() #adicioné el _async
         if not res: return []
         resultados = await asyncio.gather(*[_completar(u, None) for u in res])
         return [r for r in resultados if r]

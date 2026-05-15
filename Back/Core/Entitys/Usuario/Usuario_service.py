@@ -1,4 +1,3 @@
-
 import Back.Core.Entitys.Usuario.Usuario_repo as repo
 from Back.Core.Entitys.Usuario.Usuario import Usuario, UsuarioCompleto
 
