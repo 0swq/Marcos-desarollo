@@ -38,9 +38,7 @@ Desktop.ini
 # ─── Docker ───
 .docker/
 
-# ─── Media / Uploads (generados por usuarios) ───
-media/uploads/
-media/replicas/
+# ─── Fotos de productos (binarios grandes) ───
 Back/Resources/Fotos/Productos_base/*.jpg
 Back/Resources/Fotos/Variantes/*.jpg
 
