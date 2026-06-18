@@ -4,8 +4,6 @@ from peewee import UUIDField, CharField, DateTimeField, ForeignKeyField, Decimal
 
 from Back.Core.Connection.Postgre import BaseModel
 from Back.Core.Entitys.Pedido.Pedido import Pedido
-
-
 class Pago(BaseModel):
     ORDER_STATUS = ('PAID', 'UNPAID', 'UNKNOWN')
 

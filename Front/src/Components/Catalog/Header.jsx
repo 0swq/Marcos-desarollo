@@ -8,6 +8,7 @@ import MisPedidos from "@/Pages/Catalog/User/MisPedidos.jsx";
 import MisDirecciones from "@/Pages/Catalog/User/MisDirecciones.jsx";
 import {Api_manager} from "@/Service/Api_manager.jsx";
 import {usePerfil} from "@/Service/Perfil_provider.jsx";
+import MisEdiciones from "@/Pages/Catalog/User/MisEdiciones.jsx";
 
 export default function Header() {
     const [menuAbierto, setMenuAbierto] = useState(false)
@@ -220,6 +221,14 @@ export default function Header() {
                                         labelIcon={<i className="fas fa-house"/>}
                                     >
                                         <MisDirecciones></MisDirecciones>
+                                    </UserProfile.Page>
+
+                                    <UserProfile.Page
+                                        label="Mis ediciones"
+                                        url="ediciones"
+                                        labelIcon={<i className="fas fa-wand-magic-sparkles"/>}
+                                    >
+                                        <MisEdiciones></MisEdiciones>
                                     </UserProfile.Page>
 
                                 </UserProfile>

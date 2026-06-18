@@ -1,9 +1,11 @@
-import {useEffect, useState} from 'react'
+import {useEffect, useState, useRef} from 'react'
 import {
-    ActionIcon, Box, Button, Modal, Skeleton, Text, TextInput, Title
+    ActionIcon, Box, Button, Modal, Skeleton, Text, TextInput, Title,
+    Loader, FileInput
 } from '@mantine/core'
 import {
-    IconBoxOff, IconBrandWhatsapp, IconSearch, IconShoppingCart, IconX
+    IconBoxOff, IconBrandWhatsapp, IconSearch, IconShoppingCart, IconX,
+    IconWand  // ícono para el botón "Probar"
 } from '@tabler/icons-react'
 import {Api_manager} from "@/Service/Api_manager.jsx"
 
@@ -40,7 +42,6 @@ function EmptyState() {
         </div>
     )
 }
-
 
 function SkeletonCard() {
     return (
@@ -129,12 +130,152 @@ function ProductoCard({producto, onClick}) {
     )
 }
 
-function ModalProducto({producto, onClose}) {
+// ---------- Modal de prueba de textura (Replicate) ----------
+function ReplicaModal({productoId, onClose, api}) {
+    const [file, setFile] = useState(null)
+    const [uploading, setUploading] = useState(false)
+    const [replicaId, setReplicaId] = useState(null)
+    const [estado, setEstado] = useState(null) // 'processing', 'ready', 'error'
+    const [resultadoUrl, setResultadoUrl] = useState(null)
+    const [errorMsg, setErrorMsg] = useState('')
+    const pollingRef = useRef(null)
+
+    const limpiarPolling = () => {
+        if (pollingRef.current) {
+            clearInterval(pollingRef.current)
+            pollingRef.current = null
+        }
+    }
+
+    useEffect(() => {
+        return () => limpiarPolling()
+    }, [])
+
+    const handleUpload = async () => {
+        if (!file) {
+            setErrorMsg('Selecciona una imagen primero')
+            return
+        }
+        setUploading(true)
+        setErrorMsg('')
+        try {
+            const resp = await api.replicas.replicar(productoId, file)
+            const {replica_id} = resp
+            setReplicaId(replica_id)
+            setEstado('processing')
+
+            limpiarPolling()
+            pollingRef.current = setInterval(async () => {
+                try {
+                    const estadoResp = await api.replicas.estado(replica_id)
+                    if (estadoResp.estado === 'listo') {
+                        setEstado('ready')
+                        setResultadoUrl(estadoResp.url_resultado)
+                        limpiarPolling()
+                    } else if (estadoResp.estado === 'error') {
+                        setEstado('error')
+                        setErrorMsg('Error al procesar la imagen')
+                        limpiarPolling()
+                    }
+                } catch (err) {
+                    console.error('Error polling:', err)
+                    setEstado('error')
+                    setErrorMsg('Error consultando estado')
+                    limpiarPolling()
+                }
+            }, 3000)
+        } catch (err) {
+            console.error('Error al replicar:', err)
+            setErrorMsg(err.message || 'Error al iniciar la réplica')
+            setEstado('error')
+        } finally {
+            setUploading(false)
+        }
+    }
+
+    return (
+        <Modal
+            opened={true}
+            onClose={() => {
+                limpiarPolling()
+                onClose()
+            }}
+            size="lg"
+            radius="lg"
+            title="Probar textura melamina"
+            centered
+        >
+            <div style={{padding: '0 8px 16px'}}>
+                {!replicaId && (
+                    <>
+                        <FileInput
+                            label="Sube una foto de tu ambiente (cocina, sala, etc.)"
+                            placeholder="Haz clic o arrastra una imagen"
+                            accept="image/png,image/jpeg,image/jpg"
+                            value={file}
+                            onChange={setFile}
+                            required
+                        />
+                        <Button
+                            fullWidth
+                            mt="md"
+                            onClick={handleUpload}
+                            loading={uploading}
+                            disabled={!file}
+                        >
+                            Probar textura
+                        </Button>
+                        {errorMsg && <Text color="red" size="sm" mt="sm">{errorMsg}</Text>}
+                    </>
+                )}
+
+                {replicaId && estado === 'processing' && (
+                    <div style={{textAlign: 'center', padding: '20px'}}>
+                        <Loader size="lg"/>
+                        <Text mt="md">Procesando imagen... esto puede tomar unos segundos</Text>
+                        <Text size="xs" color="dimmed">ID: {replicaId}</Text>
+                    </div>
+                )}
+
+                {estado === 'ready' && resultadoUrl && (
+                    <div style={{textAlign: 'center'}}>
+                        <Text mb="sm" fw={500}>¡Listo! Así se vería con la textura melamina:</Text>
+                        <img
+                            src={resultadoUrl}
+                            alt="Resultado"
+                            style={{
+                                maxWidth: '100%',
+                                maxHeight: '60vh',
+                                borderRadius: 12,
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                            }}
+                        />
+                        <Button fullWidth mt="lg" onClick={onClose} variant="light">
+                            Cerrar
+                        </Button>
+                    </div>
+                )}
+
+                {estado === 'error' && (
+                    <div>
+                        <Text color="red" size="sm">Ocurrió un error: {errorMsg}</Text>
+                        <Button fullWidth mt="md" onClick={() => window.location.reload()}>Intentar de nuevo</Button>
+                    </div>
+                )}
+            </div>
+        </Modal>
+    )
+}
+
+// ---------- Modal principal del producto (con botón Probar) ----------
+function ModalProducto({producto, onClose, api}) {
     const [varianteIdx, setVarianteIdx] = useState(0)
     const [cantidad, setCantidad] = useState(1)
     const [imgError, setImgError] = useState(false)
     const [agregado, setAgregado] = useState(false)
-    console.log(producto)
+    const [replicaModalOpen, setReplicaModalOpen] = useState(false)
+    const [agregando, setAgregando] = useState(false)
+    const [enCarrito, setEnCarrito] = useState({})  // { variante_id: cantidad }
 
     useEffect(() => {
         if (producto) {
@@ -142,6 +283,16 @@ function ModalProducto({producto, onClose}) {
             setCantidad(1)
             setImgError(false)
             setAgregado(false)
+            setReplicaModalOpen(false)
+            // Cargar items actuales del carrito
+            api.carrito.items.listar().then(data => {
+                const mapa = {}
+                data.forEach(it => {
+                    const vid = it.variante  // FK a variante
+                    if (vid) mapa[vid] = (mapa[vid] || 0) + it.cantidad
+                })
+                setEnCarrito(mapa)
+            }).catch(() => {})
         }
     }, [producto?.id])
 
@@ -154,368 +305,405 @@ function ModalProducto({producto, onClose}) {
     const precioMayorista = variante ? Number(variante.precio_mayorista) : null
     const sinStock = stockDisponible === 0
 
-    // Tipos de atributo únicos → columnas dinámicas
     const tiposAtributo = [...new Set(
         variantes.flatMap(v => (v.atributos ?? []).map(a => a.tipo))
     )]
 
-    // Atributos de la variante seleccionada (para mostrarlos debajo)
     const atributosVariante = variante?.atributos ?? []
 
-    const handleAgregar = () => {
-        setAgregado(true)
-        setTimeout(() => setAgregado(false), 2000)
+    const handleAgregar = async () => {
+        if (!variante || sinStock || agregando) return
+        setAgregando(true)
+        try {
+            await api.carrito.items.agregar(variante.id, cantidad)
+            // Actualizar contador
+            setEnCarrito(prev => ({
+                ...prev,
+                [variante.id]: (prev[variante.id] || 0) + cantidad,
+            }))
+            setAgregado(true)
+            setTimeout(() => setAgregado(false), 2000)
+        } catch (err) {
+            console.error("Error al agregar al carrito:", err)
+        } finally {
+            setAgregando(false)
+        }
     }
 
+    // Mostrar botón solo si el producto fue marcado como melamina
+    const mostrarBotonProbar = producto.esMelamina === true
+
     return (
-        <Modal
-            opened={!!producto}
-            onClose={onClose}
-            centered
-            size="xl"
-            radius="lg"
-            padding={0}
-            title={null}
-            withCloseButton={false}
-            styles={{
-                body: {padding: 0},
-                content: {overflow: 'hidden'},
-            }}
-        >
-            <div style={{display: 'flex', flexDirection: 'column', minHeight: 480}}>
+        <>
+            <Modal
+                opened={!!producto}
+                onClose={onClose}
+                centered
+                size="xl"
+                radius="lg"
+                padding={0}
+                title={null}
+                withCloseButton={false}
+                styles={{
+                    body: {padding: 0},
+                    content: {overflow: 'hidden'},
+                }}
+            >
+                <div style={{display: 'flex', flexDirection: 'column', minHeight: 480}}>
 
-                {/* ── Header ── */}
-                <div style={{
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-                    padding: '20px 24px 16px',
-                    borderBottom: '0.5px solid var(--color-border-tertiary)',
-                }}>
-                    <div>
-                        <Text fw={500} size="lg"
-                              style={{color: 'var(--color-text-primary)', lineHeight: 1.3}}>
-                            {producto.nombre}
-                        </Text>
-                        {(producto.marca || producto.unidades) && (
-                            <Text size="xs" style={{color: 'var(--color-text-secondary)'}} mt={2}>
-                                {[producto.marca, producto.unidades].filter(Boolean).join(' · ')}
+                    {/* Header */}
+                    <div style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+                        padding: '20px 24px 16px',
+                        borderBottom: '0.5px solid var(--color-border-tertiary)',
+                    }}>
+                        <div>
+                            <Text fw={500} size="lg"
+                                  style={{color: 'var(--color-text-primary)', lineHeight: 1.3}}>
+                                {producto.nombre}
                             </Text>
-                        )}
+                            {(producto.marca || producto.unidades) && (
+                                <Text size="xs" style={{color: 'var(--color-text-secondary)'}} mt={2}>
+                                    {[producto.marca, producto.unidades].filter(Boolean).join(' · ')}
+                                </Text>
+                            )}
+                        </div>
+                        <ActionIcon variant="subtle" color="gray" onClick={onClose} mt={2}>
+                            <IconX size={16}/>
+                        </ActionIcon>
                     </div>
-                    <ActionIcon variant="subtle" color="gray" onClick={onClose} mt={2}>
-                        <IconX size={16}/>
-                    </ActionIcon>
-                </div>
 
-                {/* ── Cuerpo ── */}
-                <div style={{
-                    display: 'flex',
-                    flex: 1,
-                    minHeight: 0,
-                    // Apilado en móvil
-                    flexDirection: 'column',
-                }}>
-                    {/* Usamos un inner wrapper con media-query via style tag inline no es posible en JSX,
-                        así que lo manejamos con un className o con un truco de flex-wrap */}
+                    {/* Cuerpo */}
                     <div style={{
                         display: 'flex',
                         flex: 1,
                         minHeight: 0,
-                        flexWrap: 'wrap',   // ← se apila cuando no cabe
+                        flexDirection: 'column',
                     }}>
-
-                        {/* Foto */}
                         <div style={{
-                            flex: '0 0 38%',
-                            minWidth: 220,    // colapsa a 100% cuando el modal es angosto
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            padding: 32,
-                            background: 'var(--color-background-secondary)',
-                            borderRight: '0.5px solid var(--color-border-tertiary)',
-                            borderBottom: '0.5px solid var(--color-border-tertiary)',
+                            display: 'flex',
+                            flex: 1,
+                            minHeight: 0,
+                            flexWrap: 'wrap',
                         }}>
-                            {!imgError
-                                ? <img
-                                    src={fotoUrl(producto.id)}
-                                    alt={producto.nombre}
-                                    onError={() => setImgError(true)}
-                                    style={{maxHeight: 220, width: '100%', objectFit: 'contain'}}
-                                />
-                                : <IconBoxOff size={56} color="var(--color-text-tertiary)"/>
-                            }
-                        </div>
-
-                        {/* Panel derecho */}
-                        <div style={{
-                            flex: '1 1 260px',
-                            display: 'flex', flexDirection: 'column',
-                            padding: '20px 24px', gap: 14, overflowY: 'auto',
-                        }}>
-
-                            {/* Tabla variantes */}
-                            <div>
-                                <Text size="xs" fw={500} style={{
-                                    color: 'var(--color-text-secondary)', marginBottom: 8,
-                                    textTransform: 'uppercase', letterSpacing: '0.05em',
-                                }}>
-                                    Variantes
-                                </Text>
-                                <div style={{
-                                    border: '0.5px solid var(--color-border-tertiary)',
-                                    borderRadius: 'var(--border-radius-md)',
-                                    overflow: 'auto',           // scroll horizontal en móvil
-                                }}>
-                                    <table style={{width: '100%', borderCollapse: 'collapse', fontSize: 13}}>
-                                        <thead>
-                                        <tr style={{background: 'var(--color-background-secondary)'}}>
-                                            <th style={{
-                                                padding: '8px 12px', textAlign: 'left',
-                                                fontWeight: 500, color: 'var(--color-text-secondary)',
-                                                borderBottom: '0.5px solid var(--color-border-tertiary)',
-                                            }}>SKU
-                                            </th>
-                                            <th style={{
-                                                padding: '8px 12px', textAlign: 'right',
-                                                fontWeight: 500, color: 'var(--color-text-secondary)',
-                                                borderBottom: '0.5px solid var(--color-border-tertiary)',
-                                                whiteSpace: 'nowrap',
-                                            }}>Precio
-                                            </th>
-                                            <th style={{
-                                                padding: '8px 12px', textAlign: 'center',
-                                                fontWeight: 500, color: 'var(--color-text-secondary)',
-                                                borderBottom: '0.5px solid var(--color-border-tertiary)',
-                                                whiteSpace: 'nowrap',
-                                            }}>Stock
-                                            </th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                        {variantes.map((v, i) => {
-                                            const sel = varianteIdx === i
-                                            const sinStockVar = v.stock === 0
-                                            return (
-                                                <tr
-                                                    key={v.id}
-                                                    onClick={() => {
-                                                        if (!sinStockVar) {
-                                                            setVarianteIdx(i);
-                                                            setCantidad(1)
-                                                        }
-                                                    }}
-                                                    style={{
-                                                        cursor: sinStockVar ? 'not-allowed' : 'pointer',
-                                                        background: sel ? '#E6F1FB' : 'var(--color-background-primary)',
-                                                        opacity: sinStockVar ? 0.5 : 1,
-                                                        borderBottom: i < variantes.length - 1
-                                                            ? '0.5px solid var(--color-border-tertiary)' : 'none',
-                                                        transition: 'background 0.1s',
-                                                    }}
-                                                    onMouseEnter={e => {
-                                                        if (!sel && !sinStockVar)
-                                                            e.currentTarget.style.background = 'var(--color-background-secondary)'
-                                                    }}
-                                                    onMouseLeave={e => {
-                                                        if (!sel)
-                                                            e.currentTarget.style.background = 'var(--color-background-primary)'
-                                                    }}
-                                                >
-                                                    <td style={{
-                                                        padding: '9px 12px',
-                                                        color: sel ? '#185FA5' : 'var(--color-text-primary)',
-                                                        fontWeight: sel ? 500 : 400,
-                                                        fontFamily: 'var(--font-mono)', fontSize: 12,
-                                                        whiteSpace: 'nowrap',
-                                                    }}>{v.sku}</td>
-                                                    <td style={{
-                                                        padding: '9px 12px', textAlign: 'right',
-                                                        color: sel ? '#185FA5' : 'var(--color-text-primary)',
-                                                        fontWeight: sel ? 500 : 400, whiteSpace: 'nowrap',
-                                                    }}>
-                                                        S/ {Number(v.precio_venta).toFixed(2)}
-                                                    </td>
-                                                    <td style={{padding: '9px 12px', textAlign: 'center'}}>
-                                                            <span style={{
-                                                                display: 'inline-block',
-                                                                padding: '2px 8px', borderRadius: 99,
-                                                                fontSize: 11, fontWeight: 500,
-                                                                background: sinStockVar
-                                                                    ? 'var(--color-background-danger)'
-                                                                    : v.stock <= 10
-                                                                        ? 'var(--color-background-warning)'
-                                                                        : 'var(--color-background-success)',
-                                                                color: sinStockVar
-                                                                    ? 'var(--color-text-danger)'
-                                                                    : v.stock <= 10
-                                                                        ? 'var(--color-text-warning)'
-                                                                        : 'var(--color-text-success)',
-                                                            }}>
-                                                                {sinStockVar ? 'Sin stock' : v.stock}
-                                                            </span>
-                                                    </td>
-                                                </tr>
-                                            )
-                                        })}
-                                        </tbody>
-                                    </table>
-                                </div>
+                            {/* Imagen */}
+                            <div style={{
+                                flex: '0 0 38%',
+                                minWidth: 220,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                padding: 32,
+                                background: 'var(--color-background-secondary)',
+                                borderRight: '0.5px solid var(--color-border-tertiary)',
+                                borderBottom: '0.5px solid var(--color-border-tertiary)',
+                            }}>
+                                {!imgError
+                                    ? <img
+                                        src={fotoUrl(producto.id)}
+                                        alt={producto.nombre}
+                                        onError={() => setImgError(true)}
+                                        style={{maxHeight: 220, width: '100%', objectFit: 'contain'}}
+                                    />
+                                    : <IconBoxOff size={56} color="var(--color-text-tertiary)"/>
+                                }
                             </div>
 
-                            {atributosVariante.length > 0 && (
+                            {/* Panel derecho */}
+                            <div style={{
+                                flex: '1 1 260px',
+                                display: 'flex', flexDirection: 'column',
+                                padding: '20px 24px', gap: 14, overflowY: 'auto',
+                            }}>
+                                {/* Tabla variantes */}
                                 <div>
                                     <Text size="xs" fw={500} style={{
                                         color: 'var(--color-text-secondary)', marginBottom: 8,
                                         textTransform: 'uppercase', letterSpacing: '0.05em',
                                     }}>
-                                        Especificaciones
+                                        Variantes
                                     </Text>
                                     <div style={{
-                                        display: 'flex', flexWrap: 'wrap', gap: 6,
+                                        border: '0.5px solid var(--color-border-tertiary)',
+                                        borderRadius: 'var(--border-radius-md)',
+                                        overflow: 'auto',
                                     }}>
-                                        {atributosVariante.map((atr, i) => (
-                                            <div key={i} style={{
-                                                display: 'flex', alignItems: 'center', gap: 4,
-                                                padding: '4px 10px',
-                                                borderRadius: 99,
-                                                background: 'var(--color-background-secondary)',
-                                                border: '0.5px solid var(--color-border-tertiary)',
-                                                fontSize: 12,
-                                            }}>
-                                                <span style={{color: 'var(--color-text-secondary)', fontWeight: 500}}>
-                                                    {atr.tipo}:
-                                                </span>
-                                                <span style={{color: 'var(--color-text-primary)'}}>
-                                                    {atr.valor}
-                                                </span>
-                                            </div>
-                                        ))}
+                                        <table style={{width: '100%', borderCollapse: 'collapse', fontSize: 13}}>
+                                            <thead>
+                                            <tr style={{background: 'var(--color-background-secondary)'}}>
+                                                <th style={{
+                                                    padding: '8px 12px',
+                                                    textAlign: 'left',
+                                                    fontWeight: 500,
+                                                    color: 'var(--color-text-secondary)',
+                                                    borderBottom: '0.5px solid var(--color-border-tertiary)'
+                                                }}>SKU
+                                                </th>
+                                                <th style={{
+                                                    padding: '8px 12px',
+                                                    textAlign: 'right',
+                                                    fontWeight: 500,
+                                                    color: 'var(--color-text-secondary)',
+                                                    borderBottom: '0.5px solid var(--color-border-tertiary)',
+                                                    whiteSpace: 'nowrap'
+                                                }}>Precio
+                                                </th>
+                                                <th style={{
+                                                    padding: '8px 12px',
+                                                    textAlign: 'center',
+                                                    fontWeight: 500,
+                                                    color: 'var(--color-text-secondary)',
+                                                    borderBottom: '0.5px solid var(--color-border-tertiary)',
+                                                    whiteSpace: 'nowrap'
+                                                }}>Stock
+                                                </th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            {variantes.map((v, i) => {
+                                                const sel = varianteIdx === i
+                                                const sinStockVar = v.stock === 0
+                                                return (
+                                                    <tr
+                                                        key={v.id}
+                                                        onClick={() => {
+                                                            if (!sinStockVar) {
+                                                                setVarianteIdx(i);
+                                                                setCantidad(1)
+                                                            }
+                                                        }}
+                                                        style={{
+                                                            cursor: sinStockVar ? 'not-allowed' : 'pointer',
+                                                            background: sel ? '#E6F1FB' : 'var(--color-background-primary)',
+                                                            opacity: sinStockVar ? 0.5 : 1,
+                                                            borderBottom: i < variantes.length - 1 ? '0.5px solid var(--color-border-tertiary)' : 'none',
+                                                            transition: 'background 0.1s',
+                                                        }}
+                                                        onMouseEnter={e => {
+                                                            if (!sel && !sinStockVar) e.currentTarget.style.background = 'var(--color-background-secondary)'
+                                                        }}
+                                                        onMouseLeave={e => {
+                                                            if (!sel) e.currentTarget.style.background = 'var(--color-background-primary)'
+                                                        }}
+                                                    >
+                                                        <td style={{
+                                                            padding: '9px 12px',
+                                                            color: sel ? '#185FA5' : 'var(--color-text-primary)',
+                                                            fontWeight: sel ? 500 : 400,
+                                                            fontFamily: 'var(--font-mono)',
+                                                            fontSize: 12,
+                                                            whiteSpace: 'nowrap'
+                                                        }}>{v.sku}</td>
+                                                        <td style={{
+                                                            padding: '9px 12px',
+                                                            textAlign: 'right',
+                                                            color: sel ? '#185FA5' : 'var(--color-text-primary)',
+                                                            fontWeight: sel ? 500 : 400,
+                                                            whiteSpace: 'nowrap'
+                                                        }}>S/ {Number(v.precio_venta).toFixed(2)}</td>
+                                                        <td style={{padding: '9px 12px', textAlign: 'center'}}>
+                                                                <span style={{
+                                                                    display: 'inline-block',
+                                                                    padding: '2px 8px',
+                                                                    borderRadius: 99,
+                                                                    fontSize: 11,
+                                                                    fontWeight: 500,
+                                                                    background: sinStockVar ? 'var(--color-background-danger)' : v.stock <= 10 ? 'var(--color-background-warning)' : 'var(--color-background-success)',
+                                                                    color: sinStockVar ? 'var(--color-text-danger)' : v.stock <= 10 ? 'var(--color-text-warning)' : 'var(--color-text-success)'
+                                                                }}>
+                                                                    {sinStockVar ? 'Sin stock' : v.stock}
+                                                                </span>
+                                                        </td>
+                                                    </tr>
+                                                )
+                                            })}
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
-                            )}
 
-                            {variante && (
-                                <div style={{display: 'flex', alignItems: 'baseline', gap: 16}}>
+                                {/* Especificaciones */}
+                                {atributosVariante.length > 0 && (
                                     <div>
-                                        <Text size="xs" style={{color: 'var(--color-text-secondary)'}}>
-                                            Precio unitario
-                                        </Text>
-                                        <Text fw={500} size="xl" style={{color: 'var(--color-text-primary)'}}>
-                                            S/ {precioVenta?.toFixed(2)}
-                                        </Text>
-                                    </div>
-                                    {precioMayorista > 0 && (
-                                        <div>
-                                            <Text size="xs" style={{color: 'var(--color-text-secondary)'}}>
-                                                Mayorista
-                                            </Text>
-                                            <Text fw={500} size="sm" style={{color: 'var(--color-text-secondary)'}}>
-                                                S/ {precioMayorista.toFixed(2)}
-                                            </Text>
+                                        <Text size="xs" fw={500} style={{
+                                            color: 'var(--color-text-secondary)',
+                                            marginBottom: 8,
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.05em'
+                                        }}>Especificaciones</Text>
+                                        <div style={{display: 'flex', flexWrap: 'wrap', gap: 6}}>
+                                            {atributosVariante.map((atr, i) => (
+                                                <div key={i} style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 4,
+                                                    padding: '4px 10px',
+                                                    borderRadius: 99,
+                                                    background: 'var(--color-background-secondary)',
+                                                    border: '0.5px solid var(--color-border-tertiary)',
+                                                    fontSize: 12
+                                                }}>
+                                                    <span style={{
+                                                        color: 'var(--color-text-secondary)',
+                                                        fontWeight: 500
+                                                    }}>{atr.tipo}:</span>
+                                                    <span
+                                                        style={{color: 'var(--color-text-primary)'}}>{atr.valor}</span>
+                                                </div>
+                                            ))}
                                         </div>
-                                    )}
-                                </div>
-                            )}
-                            {producto.descripcion && (
-                                <div>
-                                    <Text size="xs" fw={500} style={{
-                                        color: 'var(--color-text-secondary)', marginBottom: 6,
-                                        textTransform: 'uppercase', letterSpacing: '0.05em',
-                                    }}>
-                                        Descripción
-                                    </Text>
-                                    <Text size="sm" style={{
-                                        color: 'var(--color-text-primary)',
-                                        lineHeight: 1.6,
-                                        whiteSpace: 'pre-line',
-                                    }}>
-                                        {producto.descripcion}
-                                    </Text>
-                                </div>
-                            )}
+                                    </div>
+                                )}
 
-                            {/* Cantidad + botones */}
-                            <div style={{marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10}}>
-                                {!sinStock && variante && (
-                                    <div style={{display: 'flex', alignItems: 'center', gap: 10}}>
-                                        <Text size="xs" fw={500}
-                                              style={{color: 'var(--color-text-secondary)', minWidth: 60}}>
-                                            Cantidad
-                                        </Text>
-                                        <div style={{
-                                            display: 'flex', alignItems: 'center',
-                                            border: '0.5px solid var(--color-border-secondary)',
-                                            borderRadius: 'var(--border-radius-md)', overflow: 'hidden',
-                                        }}>
-                                            <button
-                                                onClick={() => setCantidad(c => Math.max(1, c - 1))}
-                                                disabled={cantidad <= 1}
-                                                style={{
-                                                    width: 32, height: 32, border: 'none',
+                                {/* Precios */}
+                                {variante && (
+                                    <div style={{display: 'flex', alignItems: 'baseline', gap: 16}}>
+                                        <div>
+                                            <Text size="xs" style={{color: 'var(--color-text-secondary)'}}>Precio
+                                                unitario</Text>
+                                            <Text fw={500} size="xl"
+                                                  style={{color: 'var(--color-text-primary)'}}>S/ {precioVenta?.toFixed(2)}</Text>
+                                        </div>
+                                        {precioMayorista > 0 && (
+                                            <div>
+                                                <Text size="xs"
+                                                      style={{color: 'var(--color-text-secondary)'}}>Mayorista</Text>
+                                                <Text fw={500} size="sm"
+                                                      style={{color: 'var(--color-text-secondary)'}}>S/ {precioMayorista.toFixed(2)}</Text>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Descripción */}
+                                {producto.descripcion && (
+                                    <div>
+                                        <Text size="xs" fw={500} style={{
+                                            color: 'var(--color-text-secondary)',
+                                            marginBottom: 6,
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.05em'
+                                        }}>Descripción</Text>
+                                        <Text size="sm" style={{
+                                            color: 'var(--color-text-primary)',
+                                            lineHeight: 1.6,
+                                            whiteSpace: 'pre-line'
+                                        }}>{producto.descripcion}</Text>
+                                    </div>
+                                )}
+
+                                {/* Cantidad + botones */}
+                                <div style={{marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10}}>
+                                    {!sinStock && variante && (
+                                        <div style={{display: 'flex', alignItems: 'center', gap: 10}}>
+                                            <Text size="xs" fw={500} style={{
+                                                color: 'var(--color-text-secondary)',
+                                                minWidth: 60
+                                            }}>Cantidad</Text>
+                                            <div style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                border: '0.5px solid var(--color-border-secondary)',
+                                                borderRadius: 'var(--border-radius-md)',
+                                                overflow: 'hidden'
+                                            }}>
+                                                <button onClick={() => setCantidad(c => Math.max(1, c - 1))}
+                                                        disabled={cantidad <= 1} style={{
+                                                    width: 32,
+                                                    height: 32,
+                                                    border: 'none',
                                                     borderRight: '0.5px solid var(--color-border-tertiary)',
                                                     background: 'var(--color-background-secondary)',
                                                     cursor: cantidad <= 1 ? 'not-allowed' : 'pointer',
                                                     color: 'var(--color-text-primary)',
-                                                    fontSize: 16, lineHeight: 1,
-                                                }}
-                                            >−
-                                            </button>
-                                            <span style={{
-                                                minWidth: 40, textAlign: 'center',
-                                                fontSize: 14, fontWeight: 500,
-                                                color: 'var(--color-text-primary)',
-                                            }}>{cantidad}</span>
-                                            <button
-                                                onClick={() => setCantidad(c => Math.min(stockDisponible, c + 1))}
-                                                disabled={cantidad >= stockDisponible}
-                                                style={{
-                                                    width: 32, height: 32, border: 'none',
+                                                    fontSize: 16,
+                                                    lineHeight: 1
+                                                }}>−
+                                                </button>
+                                                <span style={{
+                                                    minWidth: 40,
+                                                    textAlign: 'center',
+                                                    fontSize: 14,
+                                                    fontWeight: 500,
+                                                    color: 'var(--color-text-primary)'
+                                                }}>{cantidad}</span>
+                                                <button
+                                                    onClick={() => setCantidad(c => Math.min(stockDisponible, c + 1))}
+                                                    disabled={cantidad >= stockDisponible} style={{
+                                                    width: 32,
+                                                    height: 32,
+                                                    border: 'none',
                                                     borderLeft: '0.5px solid var(--color-border-tertiary)',
                                                     background: 'var(--color-background-secondary)',
                                                     cursor: cantidad >= stockDisponible ? 'not-allowed' : 'pointer',
                                                     color: 'var(--color-text-primary)',
-                                                    fontSize: 16, lineHeight: 1,
-                                                }}
-                                            >+
-                                            </button>
+                                                    fontSize: 16,
+                                                    lineHeight: 1
+                                                }}>+
+                                                </button>
+                                            </div>
+                                            <Text size="xs"
+                                                  style={{color: 'var(--color-text-tertiary)'}}>máx. {stockDisponible}</Text>
                                         </div>
-                                        <Text size="xs" style={{color: 'var(--color-text-tertiary)'}}>
-                                            máx. {stockDisponible}
-                                        </Text>
-                                    </div>
-                                )}
+                                    )}
 
-                                <Button
-                                    fullWidth size="md"
-                                    leftSection={<IconShoppingCart size={17}/>}
-                                    disabled={sinStock || !variante}
-                                    onClick={handleAgregar}
-                                    styles={{
+                                    {/* Indicador de unidades en carrito */}
+                                    {variante && enCarrito[variante.id] > 0 && (
+                                        <div style={{
+                                            display: 'flex', alignItems: 'center', gap: 8,
+                                            padding: '8px 12px', borderRadius: 8,
+                                            background: '#e3f2fd', border: '1px solid #bbdefb',
+                                            fontSize: 13, color: '#1565c0', fontWeight: 500,
+                                        }}>
+                                            <i className="fas fa-check-circle" style={{color: '#1565c0'}}></i>
+                                            Ya tenés {enCarrito[variante.id]} en tu carrito
+                                        </div>
+                                    )}
+
+                                    <Button fullWidth size="md" leftSection={<IconShoppingCart size={17}/>}
+                                            disabled={sinStock || !variante} onClick={handleAgregar} styles={{
                                         root: {
                                             backgroundColor: agregado ? '#0F6E56' : '#185FA5',
-                                            transition: 'background-color 0.2s',
+                                            transition: 'background-color 0.2s'
                                         }
-                                    }}
-                                >
-                                    {agregado ? '¡Agregado al carrito!' : sinStock ? 'Sin stock' : 'Agregar al carrito'}
-                                </Button>
+                                    }}>
+                                        {agregado ? '¡Agregado al carrito!' : sinStock ? 'Sin stock' : 'Agregar al carrito'}
+                                    </Button>
 
-                                <Button
-                                    fullWidth size="sm" variant="outline"
-                                    component="a"
-                                    href={`https://wa.me/51923197032?text=${encodeURIComponent(
-                                        `Hola, me interesa: ${producto.nombre}${variante ? ` (${variante.sku})` : ''}`
-                                    )}`}
-                                    target="_blank" rel="noreferrer"
-                                    leftSection={<IconBrandWhatsapp size={15}/>}
-                                    styles={{root: {borderColor: '#25D366', color: '#0F6E56'}}}
-                                >
-                                    Consultar por WhatsApp
-                                </Button>
+                                    <Button fullWidth size="sm" variant="outline" component="a"
+                                            href={`https://wa.me/51923197032?text=${encodeURIComponent(`Hola, me interesa: ${producto.nombre}${variante ? ` (${variante.sku})` : ''}`)}`}
+                                            target="_blank" rel="noreferrer"
+                                            leftSection={<IconBrandWhatsapp size={15}/>}
+                                            styles={{root: {borderColor: '#25D366', color: '#0F6E56'}}}>
+                                        Consultar por WhatsApp
+                                    </Button>
+
+                                    {/* Botón Probar textura (solo si el producto es melamina) */}
+                                    {mostrarBotonProbar && (
+                                        <Button
+                                            fullWidth size="md"
+                                            variant="outline"
+                                            leftSection={<IconWand size={18}/>}
+                                            onClick={() => setReplicaModalOpen(true)}
+                                            styles={{root: {borderColor: '#378ADD', color: '#378ADD'}}}
+                                        >
+                                            Probar textura
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </Modal>
+            </Modal>
+
+            {/* Modal de prueba (Replicate) */}
+            {replicaModalOpen && (
+                <ReplicaModal
+                    productoId={producto.id}
+                    onClose={() => setReplicaModalOpen(false)}
+                    api={api}
+                />
+            )}
+        </>
     )
 }
 
@@ -534,7 +722,6 @@ function GridProductos({cargando, productos, onVerProducto}) {
         </div>
     )
 }
-
 
 function BarraBusqueda({busqueda, setBusqueda, onSubmit}) {
     return (
@@ -589,7 +776,6 @@ function SidebarCategorias({
             border: '0.5px solid var(--color-border-tertiary)',
             background: 'var(--color-background-primary)',
         }}>
-            {/* Header */}
             <div style={{
                 padding: '11px 16px',
                 background: '#185FA5',
@@ -600,7 +786,6 @@ function SidebarCategorias({
                 Categorías
             </div>
 
-            {/* Todos */}
             <button
                 onClick={() => onCategoria(null)}
                 style={{
@@ -679,7 +864,6 @@ function SidebarCategorias({
     )
 }
 
-
 export default function TiendaRest() {
     const api = Api_manager()
 
@@ -702,6 +886,21 @@ export default function TiendaRest() {
                 ])
                 setCategoriasPadre(cats ?? [])
 
+                // ---- Construir conjunto de IDs de categorías que son "melamina" (case-insensitive) ----
+                const melaminaIds = new Set()
+                ;(cats ?? []).forEach(padre => {
+                    if (padre.nombre?.toLowerCase() === 'melamina') {
+                        melaminaIds.add(padre.id)
+                        padre.hijos?.forEach(hijo => melaminaIds.add(hijo.id))
+                    } else {
+                        padre.hijos?.forEach(hijo => {
+                            if (hijo.nombre?.toLowerCase() === 'melamina') {
+                                melaminaIds.add(hijo.id)
+                            }
+                        })
+                    }
+                })
+
                 const normalizados = await Promise.all(
                     (prods ?? [])
                         .filter(p => p.ProductoBase?.publicado)
@@ -717,15 +916,10 @@ export default function TiendaRest() {
                                         precio_mayorista: Number(vc.Variante.precio_mayorista ?? 0),
                                         stock: vc.Variante.stock ?? 0,
                                         activa: vc.Variante.activa,
-                                        atributos: await Promise.all(
-                                            (vc.Atributos ?? []).map(async a => {
-                                                const tipo = await api.productos.obtener_tipo_atributo(a.tipo_atributo)
-                                                return {
-                                                    tipo: tipo.nombre,
-                                                    valor: a.valor,
-                                                }
-                                            })
-                                        ),
+                                        atributos: (vc.Atributos ?? []).map(a => ({
+                                            tipo: a.tipo_atributo?.nombre ?? a.tipo_atributo,
+                                            valor: a.valor,
+                                        })),
                                     }))
                             )
                             return {
@@ -736,6 +930,7 @@ export default function TiendaRest() {
                                 unidades: base.unidades,
                                 categoria_id: base.categoria,
                                 variantes,
+                                esMelamina: melaminaIds.has(base.categoria),   // ← flag para mostrar botón
                             }
                         })
                 )
@@ -752,17 +947,13 @@ export default function TiendaRest() {
     const productosFiltrados = productosBase.filter(p => {
         if (busquedaActiva) {
             const q = busquedaActiva.toLowerCase()
-
-            // Recopilar todos los valores de atributos de todas las variantes
             const valoresAtributos = (p.variantes ?? []).flatMap(v =>
                 (v.atributos ?? []).map(a => (a.valor ?? '').toLowerCase())
             )
-
             const coincide =
                 (p.nombre ?? '').toLowerCase().includes(q) ||
                 (p.marca ?? '').toLowerCase().includes(q) ||
                 valoresAtributos.some(val => val.includes(q))
-
             if (!coincide) return false
         }
 
@@ -781,7 +972,6 @@ export default function TiendaRest() {
 
     return (
         <>
-            {/* ── Estilos responsive ── */}
             <style>{`
                 @media (max-width: 640px) {
                     .tienda-layout {
@@ -825,6 +1015,7 @@ export default function TiendaRest() {
                 <ModalProducto
                     producto={productoDetalle}
                     onClose={() => setProductoDetalle(null)}
+                    api={api}
                 />
             </main>
         </>

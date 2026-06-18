@@ -8,8 +8,6 @@ from Back.Core.Entitys.Usuario.Usuario import Usuario
 from Back.Core.Entitys.Carrito.Carrito import Carrito
 from Back.Core.Entitys.Direccion.Direccion import Direccion
 from Back.Core.Entitys.Cupon.Cupon import Cupon
-
-
 class Pedido(BaseModel):
     ESTADOS = ('pendiente', 'confirmado', 'completado', 'cancelado')
     TIPOS_ENTREGA = ('DELIVERY', 'RECOJO')

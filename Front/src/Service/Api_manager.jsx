@@ -71,5 +71,53 @@ export function Api_manager() {
         cambiar_estado: (categoria_id) => api.patch(`/categoria/${categoria_id}/estado`),
     }
 
-    return {usuarios, productos, categorias}
+    const chat = {
+        stream: (prompt, historial, abortSignal) =>
+            api.stream("/chat/stream", {prompt, historial}, abortSignal),
+    }
+
+    const replicas = {
+        replicar: (producto_base_id, imagen) => {
+            const form = new FormData()
+            form.append("producto_base_id", producto_base_id)
+            form.append("imagen", imagen)
+            console.log("producto_base_id:", producto_base_id)
+            console.log("imagen:", imagen, typeof imagen)
+            return api.upload("/replicador/replicar", form, 'POST', true)
+        },
+        estado: (replica_id) => api.get(`/replicador/estado/${replica_id}`),
+        historial: (pagina = 1, por_pagina = 12) =>
+            api.get(`/replicador/historial?pagina=${pagina}&por_pagina=${por_pagina}`),
+    }
+    const carrito = {
+        obtener_activo: () => api.get("/carrito/activo"),
+        crear: () => api.post("/carrito/"),
+        completar: (carrito_id) => api.patch(`/carrito/${carrito_id}/completar`),
+        abandonar: (carrito_id) => api.patch(`/carrito/${carrito_id}/abandonar`),
+        eliminar: (carrito_id) => api.delete(`/carrito/${carrito_id}`),
+
+        items: {
+            agregar: (variante_id, cantidad = 1) =>
+                api.post("/carrito/items/", { variante_id, cantidad }),
+            listar: () => api.get("/carrito/items/"),
+            actualizar: (item_id, cantidad) =>
+                api.patch(`/carrito/items/${item_id}`, { cantidad }),
+            eliminar: (item_id) => api.delete(`/carrito/items/${item_id}`),
+        },
+    }
+
+    const pedidos = {
+        crear: (tipo_entrega = "RECOJO") =>
+            api.post("/pedido/crear", { tipo_entrega }),
+        listar: () => api.get("/pedido/"),
+        obtener: (pedido_id) => api.get(`/pedido/${pedido_id}`),
+    }
+
+    const pagos = {
+        crear: (pedido_id, metodo = "tarjeta") =>
+            api.post("/pago/crear", { pedido_id, metodo }),
+        obtener: (pago_id) => api.get(`/pago/${pago_id}`),
+    }
+
+    return {usuarios, productos, categorias, chat, replicas, carrito, pedidos, pagos}
 }

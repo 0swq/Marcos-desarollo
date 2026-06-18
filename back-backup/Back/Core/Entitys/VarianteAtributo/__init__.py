@@ -1,0 +1,1 @@
+from Back.Core.Entitys.VarianteAtributo.VarianteAtributo import VarianteAtributo

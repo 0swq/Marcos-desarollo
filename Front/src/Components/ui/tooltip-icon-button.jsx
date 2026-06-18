@@ -8,7 +8,6 @@ import {
   TooltipTrigger,
 } from "@/Components/ui/tooltip.jsx";
 import { cn } from "@/lib/utils";
-//asd
 export const TooltipIconButton = forwardRef(
   ({ children, tooltip, side = "bottom", className, ...rest }, ref) => {
     return (

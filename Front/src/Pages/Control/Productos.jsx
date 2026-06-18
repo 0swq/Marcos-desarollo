@@ -33,7 +33,6 @@ const mapearVariante = (vc) => ({
     atributos: (vc.Atributos ?? []).map(a => ({tipo: a.tipo_atributo, valor: a.valor})).filter(a => a.tipo),
 });
 
-// ─── useModal ────────────────────────────────────────────────────────────────
 function useModal(emptyForm) {
     const [modal, setModal] = useState({open: false, data: null});
     const [form, setForm] = useState(emptyForm);
@@ -60,8 +59,6 @@ function useModal(emptyForm) {
 
     return {modal, form, setForm, saving, abrir, cerrar, guardar};
 }
-
-// ─── useFormErrors ────────────────────────────────────────────────────────────
 function useFormErrors() {
     const [errors, setErrors] = useState({});
 
@@ -709,7 +706,6 @@ export default function Productos() {
     const vari = useModal(emptyVar);
     const stock = useModal(null);
 
-    // ── Errores de validación por modal ──
     const erroresCat  = useFormErrors();
     const erroresAtr  = useFormErrors();
     const erroresProd = useFormErrors();
@@ -792,8 +788,6 @@ export default function Productos() {
     };
 
     const productos = productosBase.map(adaptarProducto);
-
-    // ── Fotos ──
     const abrirFotoProducto = (record) => setModalFoto({
         open: true, id: record.id, tipo: "producto",
         titulo: record.nombre,
@@ -822,7 +816,6 @@ export default function Productos() {
         }
     };
 
-    // ── Guardar Categoria ──
     const guardarCat = () => {
         if (!erroresCat.validar({
             nombre: {valor: cat.form.nombre, mensaje: "El nombre es requerido"},
@@ -834,8 +827,6 @@ export default function Productos() {
             await cargarTodo();
         });
     };
-
-    // ── Subcategorias ──
     const abrirSubs = (c) => {
         setSubsList([...(c.hijos ?? [])]);
         setNuevaSub("");
@@ -868,7 +859,6 @@ export default function Productos() {
         setCategorias(await api.categorias.listar_padres() ?? []);
     };
 
-    // ── Guardar Atributo ──
     const guardarAtr = () => {
         if (!erroresAtr.validar({
             nombre: {valor: atr.form.nombre, mensaje: "El nombre es requerido"},
@@ -881,7 +871,6 @@ export default function Productos() {
         });
     };
 
-    // ── Guardar Producto ──
     const guardarProd = () => {
         if (!erroresProd.validar({
             nombre:       {valor: prod.form.nombre,       mensaje: "El nombre es requerido"},
@@ -895,7 +884,6 @@ export default function Productos() {
         });
     };
 
-    // ── Guardar Variante ──
     const guardarVar = () => {
         if (!erroresVar.validar({
             sku: {valor: vari.form.sku, mensaje: "El SKU es requerido"},
@@ -935,7 +923,6 @@ export default function Productos() {
         });
     };
 
-    // ── Stock ──
     const guardarStock = async (operacion, cantidad) => {
         setPendienteStock({operacion, cantidad});
         if (codigoStock) {
@@ -989,7 +976,6 @@ export default function Productos() {
         }
     };
 
-    // ── Datos derivados ──
     const opsCat = categorias.flatMap(c => {
         const hijos = c.hijos ?? [];
         if (hijos.length > 0) return hijos.map(h => ({

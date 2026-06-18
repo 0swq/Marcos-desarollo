@@ -1,4 +1,3 @@
-// Pages/Catalog/ContactanosRest.jsx
 import { useRef, useEffect, useState } from 'react'
 import MiramarAlto from '../../assets/MiramarAlto.png'
 import ElProgreso from '../../assets/ELProgreso.png'

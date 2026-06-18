@@ -1,4 +1,3 @@
-// Pages/Catalog/ReclamacionesRest.jsx
 import {useRef, useEffect, useState} from 'react'
 
 const tiposReclamo = [

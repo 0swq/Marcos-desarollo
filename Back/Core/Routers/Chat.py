@@ -1,3 +1,6 @@
+import os
+
+from dotenv import load_dotenv
 from fastapi import APIRouter
 from fastapi.params import Depends
 from groq import Groq
@@ -6,7 +9,16 @@ from pydantic import BaseModel
 from Back.Core.Connection.Postgre import db
 from Back.Infra.Utils.TOKEN import es_admin
 
-client = Groq(api_key="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")
+load_dotenv()
+
+_client = None
+
+
+def _get_client():
+    global _client
+    if _client is None:
+        _client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+    return _client
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 PROMPT_SQL = """
@@ -111,7 +123,7 @@ class ChatRequest(BaseModel):
 
 @router.post("/stream")
 def chat_stream(req: ChatRequest, usuario: dict = Depends(es_admin)):
-    sql_response = client.chat.completions.create(
+    sql_response = _get_client().chat.completions.create(
         model="llama-3.1-8b-instant",
         messages=[
             {"role": "system", "content": PROMPT_SQL},
@@ -150,7 +162,7 @@ def chat_stream(req: ChatRequest, usuario: dict = Depends(es_admin)):
     ]
 
     def generate():
-        stream = client.chat.completions.create(
+        stream = _get_client().chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=messages,
             stream=True,

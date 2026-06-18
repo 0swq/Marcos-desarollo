@@ -90,10 +90,10 @@ export function useApi() {
             reader.cancel()
         }
     }
-    const upload = async (url, formData) => {
+    const upload = async (url, formData, method = 'PATCH', silent = false) => {
         const token = await getToken()
         const res = await fetch(`${BASE_URL}${url}`, {
-            method: 'PATCH',
+            method: method,
             headers: {Authorization: `Bearer ${token}`},
             body: formData,
         })
@@ -112,7 +112,9 @@ export function useApi() {
             const data = await res.json().catch(() => ({}));
             throw new Error(data?.detail ?? 'Error en el servidor')
         }
-        noti_util("exito", "Completado")
+        if (!silent) {
+            noti_util("exito", "Completado")
+        }
         return res.json()
     }
     return {
@@ -122,6 +124,6 @@ export function useApi() {
         put: (url, body) => request(url, {method: 'PUT', body: JSON.stringify(body)}),
         delete: (url) => request(url, {method: 'DELETE'}),
         stream: (url, body, abortSignal) => stream(url, body, abortSignal),
-        upload: (url, formData) => upload(url, formData),
+         upload: (url, formData, method = 'PATCH', silent = false) => upload(url, formData, method, silent),
     }
 }

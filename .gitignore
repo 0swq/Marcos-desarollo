@@ -1,0 +1,55 @@
+# ─── Python ───
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+*.egg
+.venv/
+venv/
+env/
+dist/
+build/
+*.whl
+
+# ─── Node / Frontend ───
+node_modules/
+Front/dist/
+Front/.cache/
+
+# ─── Variables de entorno (contienen secretos) ───
+.env
+.env.local
+.env.*.local
+Back/.env
+Front/.env
+
+# ─── IDE ───
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ─── Sistema Operativo ───
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ─── Docker ───
+.docker/
+
+# ─── Media / Uploads (generados por usuarios) ───
+media/uploads/
+media/replicas/
+Back/Resources/Fotos/Productos_base/*.jpg
+Back/Resources/Fotos/Variantes/*.jpg
+
+# ─── Ngrok ───
+ngrok.yml
+
+# ─── Logs ───
+*.log
+logs/
+
+# ─── Backup ───
+src-backup/

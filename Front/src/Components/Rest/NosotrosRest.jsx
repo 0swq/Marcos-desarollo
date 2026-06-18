@@ -1,4 +1,3 @@
-// Pages/Catalog/NosotrosRest.jsx
 import { useEffect, useRef } from 'react'
 
 const datosRegistrales = [

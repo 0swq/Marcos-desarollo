@@ -60,14 +60,14 @@ def listar_productos_publicos():
 
 
 @router.get("/todos", response_model=None)
-def listar_productos(usuario: dict = Depends(es_admin)):
+def listar_productos():
     productos = producto_service.obtener_productos_completos()
     return [serializar_producto_completo(p) for p in productos]
 
 
 @router.post("/stock/solicitarCodigo")
 async def solicitar_codigo_stock(usuario: dict = Depends(es_admin)):
-    numero = "51940061944"
+    numero = os.getenv("NUMERO_APROBAR_STOCK", "51940061944")
 
     with Clerk(bearer_auth=os.getenv("CLERK_SECRET_KEY")) as clerk:
         usr = clerk.users.get(user_id=usuario.get("clerk_id"))
@@ -89,7 +89,7 @@ async def solicitar_codigo_stock(usuario: dict = Depends(es_admin)):
     async with httpx.AsyncClient() as client:
         response = await client.get(
             "https://api.callmebot.com/whatsapp.php",
-            params={"phone": numero, "text": f"Código de aprobación de stock: {codigo}", "apikey": "7069407"}
+            params={"phone": numero, "text": f"Código de aprobación de stock: {codigo}", "apikey": os.getenv("CALLMEBOT_APIKEY")}
         )
         print("callmebot:", response.status_code, response.text)
 
@@ -102,7 +102,7 @@ def listar_tipos_atributo(usuario: dict = Depends(es_admin)):
 
 
 @router.get("/tipo-atributo/{tipo_atributo_id}", response_model=None)
-def obtener_tipo_atributo(tipo_atributo_id: str, usuario: dict = Depends(es_admin)):
+def obtener_tipo_atributo(tipo_atributo_id: str):
     tipo = producto_service.obtener_tipo_atributo(tipo_atributo_id)
     if not tipo:
         raise HTTPException(status_code=404, detail="Tipo de atributo no encontrado")
